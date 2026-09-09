@@ -22,9 +22,15 @@
         .prompt-text { background: #fff8ec; border: 1px solid #f1e2c0; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.95em; line-height: 1.4; }
         .step { border: 2px solid var(--primary); padding: 15px; margin-bottom: 12px; border-radius: 8px; background: #fff; }
         .formula-bar { background: #343a40; color: #00ffc3; padding: 12px; border-radius: 4px; text-align: center; margin: 10px 0; min-height: 50px; }
-        .feedback { margin-top: 8px; padding: 6px; border-radius: 4px; font-size: 0.85em; font-weight: bold; display: none; }
+        .feedback { margin-top: 8px; padding: 8px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold; display: none; }
         .correct { background: #d3f9d8; color: #2b8a3e; display: block !important; }
         .incorrect { background: #f8d7da; color: #721c24; display: block !important; }
+        
+        /* Progressive Hint Styling */
+        .hint-box { background: #e7f5ff; border: 1px solid #a5d8ff; color: #1864ab; padding: 10px 12px; border-radius: 6px; font-size: 0.85em; margin-top: 10px; display: none; }
+        .example-box { background: #f3f0ff; border: 1px solid #d0bfff; color: #3b5bdb; padding: 12px; border-radius: 6px; font-size: 0.85em; margin-top: 10px; display: none; line-height: 1.4; }
+        .example-box h4 { margin: 0 0 6px 0; color: #4c6ef5; font-size: 0.95em; }
+
         input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 140px; }
         button { padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
         .side-panel { background: white; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
@@ -62,6 +68,8 @@
                 <div class="formula-bar" id="formulaBar">$$ Q = mc\Delta T $$</div>
                 <input type="number" id="in1" step="any" placeholder="answer"><button onclick="window.check1()">Verify</button>
                 <div id="fb1" class="feedback"></div>
+                <div id="hintBox" class="hint-box"></div>
+                <div id="exampleBox" class="example-box"></div>
             </div>
         </div>
 
@@ -122,7 +130,6 @@
             <div id="sceneRTable" class="scene">
                 <div class="ref-title">Wall Cross-Section Assembly</div>
                 
-                <!-- Dynamic SVG Wall Cross-Section Graphic -->
                 <svg id="wallGraphic" width="440" height="230" viewBox="0 0 440 230" style="background:#f1f4f8; border-radius:8px; border:1px solid #cbd5e1; margin-bottom:10px; width:100%;">
                     <!-- Rendered via JS -->
                 </svg>
@@ -166,6 +173,7 @@
     <script>
         window.p = {};
         window.score = parseInt(localStorage.getItem('score_thermo')) || 0;
+        window.incorrectAttempts = 0;
 
         const HEAT_MATERIALS = [
             { name: "water", c: 4.184 },
@@ -183,7 +191,6 @@
             { name: "fiberglass insulation", k: 0.04 }
         ];
 
-        // Master R-Value Dictionary for Structural Building Layers
         const MAT_LIBRARY = {
             air_out: { name: "Outside Air Film", type: "direct", r: 0.17, color: "#e2e8f0" },
             air_in:  { name: "Inside Air Film", type: "direct", r: 0.68, color: "#f8fafc" },
@@ -195,8 +202,6 @@
             polyiso_1in: { name: "1 in. Polyisocyanurate", type: "direct", r: 7.20, color: "#c084fc" },
             drywall_half: { name: "1/2 in. Drywall", type: "direct", r: 0.45, color: "#cbd5e1" },
             drywall_58: { name: "5/8 in. Drywall", type: "direct", r: 0.56, color: "#94a3b8" },
-            
-            // Per-inch insulation fills
             ins_fiberglass: { name: "Fiberglass Batt", type: "per_inch", r_per_in: 3.14, color: "#f472b6" },
             ins_rockwool: { name: "Rock Wool Blanket", type: "per_inch", r_per_in: 3.40, color: "#a3e635" },
             ins_cellulose: { name: "Cellulose Insulation", type: "per_inch", r_per_in: 3.25, color: "#fbbf24" }
@@ -224,7 +229,6 @@
                 const x = startX + (idx * sliceW);
                 html += `<rect x="${x}" y="${startY}" width="${sliceW}" height="${height}" fill="${layer.color}" stroke="#334155" stroke-width="1.5"/>`;
                 
-                // Staggered Callout Lines
                 const labelX = 195;
                 const labelY = 42 + (idx * 26);
                 const lStartX = x + (sliceW / 2);
@@ -236,7 +240,6 @@
                 let desc = layer.name;
                 if(layer.thickness) desc += ` (${layer.thickness} in.)`;
                 
-                // Layer label only - R-values hidden from graphic display
                 html += `<text x="${labelX}" y="${labelY - 2}" font-size="10" font-weight="bold" fill="#1a3a5a">Layer ${idx+1}: ${desc}</text>`;
             });
 
@@ -244,7 +247,7 @@
         }
 
         const TYPE_BUILDERS = [
-            // Level 1: Basic Direct Formula (Q = mcΔT)
+            // Level 1
             function () {
                 const mat = pick(HEAT_MATERIALS);
                 const m = randInt(100, 800);
@@ -262,10 +265,14 @@
                         { label: "Find", value: "Q (J)" }
                     ],
                     target: target,
-                    unitHint: "J"
+                    unitHint: "J",
+                    hint: "💡 <b>Hint:</b> Directly multiply mass, specific heat, and temperature change: $Q = m \\cdot c \\cdot \\Delta T$.",
+                    example: `<h4>Step-by-Step Example:</h4>
+                    For a 200 g material with $c = 0.5$ J/g°C and $\\Delta T = 10$°C:<br>
+                    $Q = 200 \\times 0.5 \\times 10 = 1000$ J.`
                 };
             },
-            // Level 2: Requires Unit Conversion (Thickness in cm -> m)
+            // Level 2
             function () {
                 const mat = pick(CONDUCT_MATERIALS);
                 const A = round(rand(1.0, 3.0), 2);
@@ -275,7 +282,7 @@
                 const target = round((mat.k * A * dT) / L_m, 2);
                 return {
                     category: "conduct",
-                    prompt: `A sheet of ${mat.name} (k = ${mat.k} W/m°C) has a surface area of ${A} m² and a thickness of <b>${L_cm} cm</b>. The temperature difference across it is ${dT}°C. Calculate the rate of heat flow in Watts (J/s). <i>(Note: Convert thickness to meters first!)</i>`,
+                    prompt: `A sheet of ${mat.name} (k = ${mat.k} W/m°C) has a surface area of ${A} m² and a thickness of <b>${L_cm} cm</b>. The temperature difference across it is ${dT}°C. Calculate the rate of heat flow in Watts (J/s).`,
                     stepLabel: "Level 2: Unit Conversion & Solve for P",
                     formula: "$$ P = \\frac{kA\\Delta T}{L} $$",
                     valBoxes: [
@@ -285,10 +292,15 @@
                         { label: "\u0394T", value: dT + " \u00B0C" }
                     ],
                     target: target,
-                    unitHint: "W"
+                    unitHint: "W",
+                    hint: "💡 <b>Hint:</b> Convert thickness from cm to meters first ($L = \\text{cm} / 100$), then plug into $P = (k \\cdot A \\cdot \\Delta T) / L$.",
+                    example: `<h4>Step-by-Step Example:</h4>
+                    If $k = 0.5$, $A = 2$, $\\Delta T = 20$, and $L = 5$ cm:<br>
+                    1. Convert $L$: $5 \\text{ cm} = 0.05 \\text{ m}$<br>
+                    2. Calculate $P$: $(0.5 \\times 2 \\times 20) / 0.05 = 400$ W.`
                 };
             },
-            // Level 3: Multi-step solving for Final Temperature (T_final)
+            // Level 3
             function () {
                 const mat = pick(HEAT_MATERIALS);
                 const m = randInt(200, 800);
@@ -308,10 +320,15 @@
                         { label: "Find", value: "T_final (\u00B0C)" }
                     ],
                     target: target,
-                    unitHint: "\u00B0C"
+                    unitHint: "\u00B0C",
+                    hint: "💡 <b>Hint:</b> First solve for temperature change $\\Delta T = Q / (m \\cdot c)$, then add that change to the initial temperature.",
+                    example: `<h4>Step-by-Step Example:</h4>
+                    If $m = 100$ g, $c = 0.5$ J/g°C, $Q = 500$ J, and $T_{\\text{initial}} = 20$°C:<br>
+                    1. Calculate $\\Delta T$: $500 / (100 \\times 0.5) = 10$°C<br>
+                    2. Add to $T_{\\text{initial}}$: $20 + 10 = 30$°C.`
                 };
             },
-            // Level 4: Time Conversion + Power Calculation
+            // Level 4
             function () {
                 const P = randInt(30, 150);
                 const hours = round(rand(1.0, 3.0), 1);
@@ -319,7 +336,7 @@
                 const target = round(P * seconds, 0);
                 return {
                     category: "power",
-                    prompt: `A heating device rated at ${P} Watts operates continuously for <b>${hours} hours</b>. Calculate the total thermal energy transferred in Joules. <i>(Note: Convert time to seconds!)</i>`,
+                    prompt: `A heating device rated at ${P} Watts operates continuously for <b>${hours} hours</b>. Calculate the total thermal energy transferred in Joules.`,
                     stepLabel: "Level 4: Convert Time & Solve for Q",
                     formula: "$$ Q = P \\cdot \\Delta t $$",
                     valBoxes: [
@@ -329,10 +346,15 @@
                         { label: "--", value: "--" }
                     ],
                     target: target,
-                    unitHint: "J"
+                    unitHint: "J",
+                    hint: "💡 <b>Hint:</b> Convert hours into seconds first by multiplying by 3600 ($1 \\text{ hour} = 3600 \\text{ seconds}$), then calculate $Q = P \\cdot \\Delta t$.",
+                    example: `<h4>Step-by-Step Example:</h4>
+                    If $P = 50$ W and time is $2$ hours:<br>
+                    1. Convert time: $2 \\times 3600 = 7200$ s<br>
+                    2. Calculate $Q$: $50 \\times 7200 = 360,000$ J.`
                 };
             },
-            // Level 5: Combined Conduction + Liquid Water Temperature Rise
+            // Level 5
             function () {
                 const mat = pick(CONDUCT_MATERIALS);
                 const A = round(rand(0.5, 1.5), 2);
@@ -359,12 +381,17 @@
                         { label: "Time Span", value: time_sec + " s" }
                     ],
                     target: actual_dT,
-                    unitHint: "\u00B0C"
+                    unitHint: "\u00B0C",
+                    hint: "💡 <b>Hint:</b> Step 1: Calculate power rate $P = (k \\cdot A \\cdot \\Delta T_{\\text{wall}}) / L$.<br>Step 2: Calculate total heat $Q = P \\cdot t$.<br>Step 3: Solve water temperature rise $\\Delta T = Q / (m \\cdot c)$.",
+                    example: `<h4>Step-by-Step Example:</h4>
+                    If $P = 100$ W, time $t = 60$ s, water mass $m = 200$ g, $c = 4.184$ J/g°C:<br>
+                    1. Total heat $Q = 100 \\times 60 = 6000$ J<br>
+                    2. Temperature rise $\\Delta T = 6000 / (200 \\times 4.184) = 7.2$°C.`
                 };
             },
-            // Level 6: Realistic 5-Layer Wall Assembly R-Value Calculation
+            // Level 6
             function () {
-                const cavityThick = pick([3.5, 5.5]); // 2x4 vs 2x6 stud depth
+                const cavityThick = pick([3.5, 5.5]); 
                 const insMat = pick([MAT_LIBRARY.ins_fiberglass, MAT_LIBRARY.ins_rockwool, MAT_LIBRARY.ins_cellulose]);
                 
                 const layers = [
@@ -392,10 +419,14 @@
                         { label: "Interior", value: "1/2 in. Drywall + Still Air" }
                     ],
                     target: totalR,
-                    unitHint: "R"
+                    unitHint: "R",
+                    hint: "💡 <b>Hint:</b> For cavity insulation, multiply the chart's 'per inch' rate by the thickness in inches. Direct layers add straight across.",
+                    example: `<h4>Step-by-Step Example:</h4>
+                    If siding = 0.8, sheathing = 0.63, insulation = 3.14/in × 3.5 in (10.99), drywall = 0.45, air = 0.68:<br>
+                    $R_{\\text{total}} = 0.8 + 0.63 + 10.99 + 0.45 + 0.68 = 13.55$.`
                 };
             },
-            // Level 7: High-Efficiency 7-Layer Wall Assembly R-Value Calculation
+            // Level 7
             function () {
                 const cavityThick = pick([3.5, 5.5, 7.25]); 
                 const insMat = pick([MAT_LIBRARY.ins_fiberglass, MAT_LIBRARY.ins_rockwool, MAT_LIBRARY.ins_cellulose]);
@@ -429,7 +460,11 @@
                         { label: "Interior", value: "5/8 in. Drywall + Air Film" }
                     ],
                     target: totalR,
-                    unitHint: "R"
+                    unitHint: "R",
+                    hint: "💡 <b>Hint:</b> Sum all 7 layers carefully from the lookup table. Don't forget outside air film (0.17) and inside air film (0.68).",
+                    example: `<h4>Step-by-Step Example:</h4>
+                    Summing each layer:<br>
+                    Air Out (0.17) + Siding (0.80) + Rigid (5.00) + Sheathing (1.32) + Cavity Ins (3.14×3.5=10.99) + Drywall (0.56) + Air In (0.68) = 19.52.`
                 };
             }
         ];
@@ -453,6 +488,7 @@
         function generate() {
             if (window.score >= 7) { alert("Mastery Achieved! You have completed all levels."); window.location.href = "index.html"; return; }
 
+            window.incorrectAttempts = 0;
             const problem = TYPE_BUILDERS[window.score % TYPE_BUILDERS.length]();
             window.p = problem;
 
@@ -479,26 +515,54 @@
         window.check1 = function () {
             const input = parseFloat(document.getElementById('in1').value);
             const fb = document.getElementById('fb1');
+            const hintBox = document.getElementById('hintBox');
+            const exampleBox = document.getElementById('exampleBox');
 
             if (isClose(input, window.p.target)) {
-                fb.innerText = "\u2705 Correct! Total R-Value = " + window.p.target + " " + window.p.unitHint;
+                fb.innerText = "✅ Correct! Answer = " + window.p.target + " " + window.p.unitHint;
                 fb.className = "feedback correct";
+                hintBox.style.display = "none";
+                exampleBox.style.display = "none";
                 window.score++;
                 localStorage.setItem('score_thermo', window.score);
-                setTimeout(generate, 1200);
+                setTimeout(generate, 1500);
             } else {
-                fb.innerText = "\u274C Incorrect. Look up each layer in the chart and try again...";
+                window.incorrectAttempts++;
+                fb.innerText = "❌ Incorrect. Try again!";
                 fb.className = "feedback incorrect";
-                setTimeout(generate, 1800);
+
+                // Progressive Hinting
+                if (window.incorrectAttempts >= 1) {
+                    hintBox.innerHTML = window.p.hint;
+                    hintBox.style.display = "block";
+                }
+                if (window.incorrectAttempts >= 2) {
+                    exampleBox.innerHTML = window.p.example;
+                    exampleBox.style.display = "block";
+                }
+
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise();
+                }
             }
         };
 
         function resetUI(unitHint) {
             document.getElementById('in1').value = "";
             document.getElementById('in1').placeholder = "answer (" + unitHint + ")";
+            
             const fb = document.getElementById('fb1');
             fb.style.display = "none";
             fb.className = "feedback";
+
+            const hintBox = document.getElementById('hintBox');
+            hintBox.style.display = "none";
+            hintBox.innerHTML = "";
+
+            const exampleBox = document.getElementById('exampleBox');
+            exampleBox.style.display = "none";
+            exampleBox.innerHTML = "";
+
             document.getElementById('scoreDisplay').innerText = `Mastery: ${window.score}/7`;
         }
 
