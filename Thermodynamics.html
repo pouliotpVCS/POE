@@ -26,7 +26,6 @@
         .correct { background: #d3f9d8; color: #2b8a3e; display: block !important; }
         .incorrect { background: #f8d7da; color: #721c24; display: block !important; }
         
-        /* Progressive Hint Styling */
         .hint-box { background: #e7f5ff; border: 1px solid #a5d8ff; color: #1864ab; padding: 10px 12px; border-radius: 6px; font-size: 0.85em; margin-top: 10px; display: none; }
         .example-box { background: #f3f0ff; border: 1px solid #d0bfff; color: #3b5bdb; padding: 12px; border-radius: 6px; font-size: 0.85em; margin-top: 10px; display: none; line-height: 1.4; }
         .example-box h4 { margin: 0 0 6px 0; color: #4c6ef5; font-size: 0.95em; }
@@ -256,7 +255,7 @@
                 return {
                     category: "heat",
                     prompt: `A ${m} g piece of ${mat.name} (c = ${mat.c} J/g°C) experiences a temperature rise of ${dT}°C. Calculate the total heat energy added in Joules.`,
-                    stepLabel: "Level 1: Solve for Q",
+                    stepLabel: "Level 1: Heat Transfer",
                     formula: "$$ Q = mc\\Delta T $$",
                     valBoxes: [
                         { label: "Mass (m)", value: m + " g" },
@@ -266,7 +265,7 @@
                     ],
                     target: target,
                     unitHint: "J",
-                    hint: "💡 <b>Hint:</b> Directly multiply mass, specific heat, and temperature change: $Q = m \\cdot c \\cdot \\Delta T$.",
+                    hint: "💡 <b>Hint:</b> Check if all quantities match the standard units in $Q = mc\\Delta T$. Multiply mass, specific heat, and temperature change.",
                     example: `<h4>Step-by-Step Example:</h4>
                     For a 200 g material with $c = 0.5$ J/g°C and $\\Delta T = 10$°C:<br>
                     $Q = 200 \\times 0.5 \\times 10 = 1000$ J.`
@@ -282,8 +281,8 @@
                 const target = round((mat.k * A * dT) / L_m, 2);
                 return {
                     category: "conduct",
-                    prompt: `A sheet of ${mat.name} (k = ${mat.k} W/m°C) has a surface area of ${A} m² and a thickness of <b>${L_cm} cm</b>. The temperature difference across it is ${dT}°C. Calculate the rate of heat flow in Watts (J/s).`,
-                    stepLabel: "Level 2: Unit Conversion & Solve for P",
+                    prompt: `A sheet of ${mat.name} (k = ${mat.k} W/m°C) has a surface area of ${A} m² and a thickness of ${L_cm} cm. The temperature difference across it is ${dT}°C. Calculate the rate of heat flow in Watts (J/s).`,
+                    stepLabel: "Level 2: Thermal Conduction",
                     formula: "$$ P = \\frac{kA\\Delta T}{L} $$",
                     valBoxes: [
                         { label: "k", value: mat.k + " W/m\u00B0C" },
@@ -293,7 +292,7 @@
                     ],
                     target: target,
                     unitHint: "W",
-                    hint: "💡 <b>Hint:</b> Convert thickness from cm to meters first ($L = \\text{cm} / 100$), then plug into $P = (k \\cdot A \\cdot \\Delta T) / L$.",
+                    hint: "💡 <b>Hint:</b> Check your units carefully before using $P = \\frac{kA\\Delta T}{L}$. Ensure thickness $L$ matches the meters unit in thermal conductivity ($k$).",
                     example: `<h4>Step-by-Step Example:</h4>
                     If $k = 0.5$, $A = 2$, $\\Delta T = 20$, and $L = 5$ cm:<br>
                     1. Convert $L$: $5 \\text{ cm} = 0.05 \\text{ m}$<br>
@@ -311,8 +310,8 @@
                 return {
                     category: "heat",
                     prompt: `A ${m} g block of ${mat.name} (c = ${mat.c} J/g°C) starts at ${T_initial}°C. If ${Q} Joules of heat energy are added, what will its <b>final temperature</b> (T<sub>final</sub>) be in °C?`,
-                    stepLabel: "Level 3: Solve for T_final",
-                    formula: "$$ T_{final} = T_{initial} + \\frac{Q}{mc} $$",
+                    stepLabel: "Level 3: Specific Heat Calculation",
+                    formula: "$$ Q = mc\\Delta T $$",
                     valBoxes: [
                         { label: "Mass (m)", value: m + " g" },
                         { label: "Heat (Q)", value: Q + " J" },
@@ -321,11 +320,11 @@
                     ],
                     target: target,
                     unitHint: "\u00B0C",
-                    hint: "💡 <b>Hint:</b> First solve for temperature change $\\Delta T = Q / (m \\cdot c)$, then add that change to the initial temperature.",
+                    hint: "💡 <b>Hint:</b> Rearrange $Q = mc\\Delta T$ to solve for temperature change $\\Delta T$ first, then combine it with $T_{\\text{initial}}$.",
                     example: `<h4>Step-by-Step Example:</h4>
                     If $m = 100$ g, $c = 0.5$ J/g°C, $Q = 500$ J, and $T_{\\text{initial}} = 20$°C:<br>
-                    1. Calculate $\\Delta T$: $500 / (100 \\times 0.5) = 10$°C<br>
-                    2. Add to $T_{\\text{initial}}$: $20 + 10 = 30$°C.`
+                    1. Rearrange: $\\Delta T = \\frac{Q}{mc} = \\frac{500}{100 \\times 0.5} = 10$°C<br>
+                    2. Calculate $T_{\\text{final}}$: $T_{\\text{final}} = T_{\\text{initial}} + \\Delta T = 20 + 10 = 30$°C.`
                 };
             },
             // Level 4
@@ -336,9 +335,9 @@
                 const target = round(P * seconds, 0);
                 return {
                     category: "power",
-                    prompt: `A heating device rated at ${P} Watts operates continuously for <b>${hours} hours</b>. Calculate the total thermal energy transferred in Joules.`,
-                    stepLabel: "Level 4: Convert Time & Solve for Q",
-                    formula: "$$ Q = P \\cdot \\Delta t $$",
+                    prompt: `A heating device rated at ${P} Watts operates continuously for ${hours} hours. Calculate the total thermal energy transferred in Joules.`,
+                    stepLabel: "Level 4: Power and Energy",
+                    formula: "$$ P = \\frac{Q}{\\Delta t} $$",
                     valBoxes: [
                         { label: "Power (P)", value: P + " W" },
                         { label: "Time (\u0394t)", value: hours + " hrs" },
@@ -347,11 +346,12 @@
                     ],
                     target: target,
                     unitHint: "J",
-                    hint: "💡 <b>Hint:</b> Convert hours into seconds first by multiplying by 3600 ($1 \\text{ hour} = 3600 \\text{ seconds}$), then calculate $Q = P \\cdot \\Delta t$.",
+                    hint: "💡 <b>Hint:</b> 1 Watt equals 1 Joule per second. Make sure your time variable $\\Delta t$ is expressed in seconds before solving for $Q$.",
                     example: `<h4>Step-by-Step Example:</h4>
                     If $P = 50$ W and time is $2$ hours:<br>
-                    1. Convert time: $2 \\times 3600 = 7200$ s<br>
-                    2. Calculate $Q$: $50 \\times 7200 = 360,000$ J.`
+                    1. Rearrange: $Q = P \\cdot \\Delta t$<br>
+                    2. Convert time: $2 \\text{ hours} \\times 3600 = 7200$ s<br>
+                    3. Calculate $Q$: $50 \\times 7200 = 360,000$ J.`
                 };
             },
             // Level 5
@@ -372,8 +372,8 @@
                 return {
                     category: "conduct",
                     prompt: `Heat conducts through a ${mat.name} panel (k = ${mat.k} W/m°C) with area ${A} m² and thickness ${L} m (temp diff ${dT_wall}°C) into a container holding ${water_mass} g of water (c = 4.184 J/g°C) for ${time_sec} seconds. Calculate the <b>temperature rise (&Delta;T) of the water</b> in °C.`,
-                    stepLabel: "Level 5: Combine P = kAΔT/L and Q = mcΔT",
-                    formula: "$$ \\Delta T = \\frac{P \\cdot \\Delta t}{m \\cdot c} $$",
+                    stepLabel: "Level 5: Multistep Heat & Conduction",
+                    formula: "$$ P = \\frac{kA\\Delta T}{L} \\quad \\text{and} \\quad Q = mc\\Delta T $$",
                     valBoxes: [
                         { label: "Wall Area", value: A + " m\u00B2" },
                         { label: "Wall Thickness", value: L + " m" },
@@ -382,11 +382,11 @@
                     ],
                     target: actual_dT,
                     unitHint: "\u00B0C",
-                    hint: "💡 <b>Hint:</b> Step 1: Calculate power rate $P = (k \\cdot A \\cdot \\Delta T_{\\text{wall}}) / L$.<br>Step 2: Calculate total heat $Q = P \\cdot t$.<br>Step 3: Solve water temperature rise $\\Delta T = Q / (m \\cdot c)$.",
+                    hint: "💡 <b>Hint:</b> This requires linking two formulas. Find conduction power rate $P$, convert it into total energy heat transfer $Q = P \\cdot t$, and use $Q = mc\\Delta T$ to find the water's temperature rise.",
                     example: `<h4>Step-by-Step Example:</h4>
                     If $P = 100$ W, time $t = 60$ s, water mass $m = 200$ g, $c = 4.184$ J/g°C:<br>
-                    1. Total heat $Q = 100 \\times 60 = 6000$ J<br>
-                    2. Temperature rise $\\Delta T = 6000 / (200 \\times 4.184) = 7.2$°C.`
+                    1. Heat energy transferred: $Q = P \\cdot t = 100 \\times 60 = 6000$ J<br>
+                    2. Rearrange $Q = mc\\Delta T \\Rightarrow \\Delta T = \\frac{Q}{mc} = \\frac{6000}{200 \\times 4.184} = 7.2$°C.`
                 };
             },
             // Level 6
@@ -410,8 +410,8 @@
                     category: "rtable",
                     layers: layers,
                     prompt: `Using the <b>R-Value Chart</b> on the right, calculate the combined total thermal resistance (<b>Total R-Value</b>) for a 5-layer exterior wall. Look up each individual material layer value and compute the total sum.`,
-                    stepLabel: "Level 6: Look Up & Sum 5-Layer Wall Assembly R-Value",
-                    formula: "$$ R_{total} = R_{siding} + R_{sheath} + (R_{per\\,in} \\times t) + R_{drywall} + R_{air} $$",
+                    stepLabel: "Level 6: 5-Layer Wall Assembly R-Value",
+                    formula: "$$ R_{\\text{total}} = \\sum R $$",
                     valBoxes: [
                         { label: "Exterior", value: "Wood Bevel Siding" },
                         { label: "Sheathing", value: "1/2 in. OSB" },
@@ -420,7 +420,7 @@
                     ],
                     target: totalR,
                     unitHint: "R",
-                    hint: "💡 <b>Hint:</b> For cavity insulation, multiply the chart's 'per inch' rate by the thickness in inches. Direct layers add straight across.",
+                    hint: "💡 <b>Hint:</b> Note that cavity insulation specifies R-value <i>per inch</i>. You must account for layer thickness before summing all layers.",
                     example: `<h4>Step-by-Step Example:</h4>
                     If siding = 0.8, sheathing = 0.63, insulation = 3.14/in × 3.5 in (10.99), drywall = 0.45, air = 0.68:<br>
                     $R_{\\text{total}} = 0.8 + 0.63 + 10.99 + 0.45 + 0.68 = 13.55$.`
@@ -451,8 +451,8 @@
                     category: "rtable",
                     layers: layers,
                     prompt: `Using the <b>R-Value Chart</b>, calculate the total thermal resistance (<b>Total R-Value</b>) for a <b>high-efficiency 7-layer building envelope wall</b> shown in the visual cross-section diagram.`,
-                    stepLabel: "Level 7: Complete 7-Layer Envelope R-Value Lookup & Sum",
-                    formula: "$$ R_{total} = \\sum R_{\\text{direct layers}} + (R_{\\text{cavity/in}} \\times t) $$",
+                    stepLabel: "Level 7: 7-Layer Building Envelope R-Value",
+                    formula: "$$ R_{\\text{total}} = \\sum R $$",
                     valBoxes: [
                         { label: "Exterior", value: `${sidingMat.name} + Air Film` },
                         { label: "Continuous", value: continuousRigid.name },
@@ -461,7 +461,7 @@
                     ],
                     target: totalR,
                     unitHint: "R",
-                    hint: "💡 <b>Hint:</b> Sum all 7 layers carefully from the lookup table. Don't forget outside air film (0.17) and inside air film (0.68).",
+                    hint: "💡 <b>Hint:</b> Verify that you have included both exterior and interior air film layers alongside structural materials in your total sum.",
                     example: `<h4>Step-by-Step Example:</h4>
                     Summing each layer:<br>
                     Air Out (0.17) + Siding (0.80) + Rigid (5.00) + Sheathing (1.32) + Cavity Ins (3.14×3.5=10.99) + Drywall (0.56) + Air In (0.68) = 19.52.`
@@ -531,7 +531,6 @@
                 fb.innerText = "❌ Incorrect. Try again!";
                 fb.className = "feedback incorrect";
 
-                // Progressive Hinting
                 if (window.incorrectAttempts >= 1) {
                     hintBox.innerHTML = window.p.hint;
                     hintBox.style.display = "block";
