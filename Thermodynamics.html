@@ -21,7 +21,7 @@
         .val-data { font-size: 0.85em; font-weight: 800; color: #1a3a5a; word-break: break-word; }
         .prompt-text { background: #fff8ec; border: 1px solid #f1e2c0; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.95em; line-height: 1.4; }
         .step { border: 2px solid var(--primary); padding: 15px; margin-bottom: 12px; border-radius: 8px; background: #fff; }
-        .formula-bar { background: #343a40; color: #00ffc3; padding: 12px; border-radius: 4px; text-align: center; margin: 10px 0; min-height: 50px; }
+        .formula-bar { background: #343a40; color: #00ffc3; padding: 12px; border-radius: 4px; text-align: center; margin: 10px 0; min-height: 50px; display: none; }
         .feedback { margin-top: 8px; padding: 8px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold; display: none; }
         .correct { background: #d3f9d8; color: #2b8a3e; display: block !important; }
         .incorrect { background: #f8d7da; color: #721c24; display: block !important; }
@@ -64,8 +64,10 @@
 
             <div id="step1" class="step">
                 <strong id="stepLabel">Solve</strong>
-                <div class="formula-bar" id="formulaBar">$$ Q = mc\Delta T $$</div>
-                <input type="number" id="in1" step="any" placeholder="answer"><button onclick="window.check1()">Verify</button>
+                <div class="formula-bar" id="formulaBar"></div>
+                <div style="margin-top:10px;">
+                    <input type="number" id="in1" step="any" placeholder="answer"><button onclick="window.check1()">Verify</button>
+                </div>
                 <div id="fb1" class="feedback"></div>
                 <div id="hintBox" class="hint-box"></div>
                 <div id="exampleBox" class="example-box"></div>
@@ -162,6 +164,7 @@
                 <div class="ref-title">Reference Equations</div>
                 <div class="ref-eq">$$Q = mc\Delta T$$</div>
                 <div class="ref-eq">$$P = \frac{kA\Delta T}{L}$$</div>
+                <div class="ref-eq">$$P = \frac{Q}{\Delta t}$$</div>
                 <div class="ref-eq">$$R_{\text{total}} = \sum R_{\text{direct}} + \sum (R_{\text{per in}} \times \text{Thickness})$$</div>
             </div>
         </div>
@@ -265,7 +268,7 @@
                     ],
                     target: target,
                     unitHint: "J",
-                    hint: "💡 <b>Hint:</b> Check if all quantities match the standard units in $Q = mc\\Delta T$. Multiply mass, specific heat, and temperature change.",
+                    hint: "💡 <b>Hint:</b> Look at the reference equations. Choose the formula relating heat energy ($Q$), mass ($m$), specific heat ($c$), and temperature change ($\\Delta T$).",
                     example: `<h4>Step-by-Step Example:</h4>
                     For a 200 g material with $c = 0.5$ J/g°C and $\\Delta T = 10$°C:<br>
                     $Q = 200 \\times 0.5 \\times 10 = 1000$ J.`
@@ -292,7 +295,7 @@
                     ],
                     target: target,
                     unitHint: "W",
-                    hint: "💡 <b>Hint:</b> Check your units carefully before using $P = \\frac{kA\\Delta T}{L}$. Ensure thickness $L$ matches the meters unit in thermal conductivity ($k$).",
+                    hint: "💡 <b>Hint:</b> Check your units carefully. Ensure thickness $L$ is converted to meters to match the thermal conductivity ($k$) unit in $P = \\frac{kA\\Delta T}{L}$.",
                     example: `<h4>Step-by-Step Example:</h4>
                     If $k = 0.5$, $A = 2$, $\\Delta T = 20$, and $L = 5$ cm:<br>
                     1. Convert $L$: $5 \\text{ cm} = 0.05 \\text{ m}$<br>
@@ -320,7 +323,7 @@
                     ],
                     target: target,
                     unitHint: "\u00B0C",
-                    hint: "💡 <b>Hint:</b> Rearrange $Q = mc\\Delta T$ to solve for temperature change $\\Delta T$ first, then combine it with $T_{\\text{initial}}$.",
+                    hint: "💡 <b>Hint:</b> Use $Q = mc\\Delta T$ to solve for temperature change $\\Delta T$ first, then combine it with $T_{\\text{initial}}$.",
                     example: `<h4>Step-by-Step Example:</h4>
                     If $m = 100$ g, $c = 0.5$ J/g°C, $Q = 500$ J, and $T_{\\text{initial}} = 20$°C:<br>
                     1. Rearrange: $\\Delta T = \\frac{Q}{mc} = \\frac{500}{100 \\times 0.5} = 10$°C<br>
@@ -346,7 +349,7 @@
                     ],
                     target: target,
                     unitHint: "J",
-                    hint: "💡 <b>Hint:</b> 1 Watt equals 1 Joule per second. Make sure your time variable $\\Delta t$ is expressed in seconds before solving for $Q$.",
+                    hint: "💡 <b>Hint:</b> Use $P = \\frac{Q}{\\Delta t}$. Convert time from hours to seconds first ($1 \\text{ hour} = 3600 \\text{ seconds}$).",
                     example: `<h4>Step-by-Step Example:</h4>
                     If $P = 50$ W and time is $2$ hours:<br>
                     1. Rearrange: $Q = P \\cdot \\Delta t$<br>
@@ -382,7 +385,7 @@
                     ],
                     target: actual_dT,
                     unitHint: "\u00B0C",
-                    hint: "💡 <b>Hint:</b> This requires linking two formulas. Find conduction power rate $P$, convert it into total energy heat transfer $Q = P \\cdot t$, and use $Q = mc\\Delta T$ to find the water's temperature rise.",
+                    hint: "💡 <b>Hint:</b> Combine two reference formulas. Find conduction power $P$, calculate total heat transferred ($Q = P \\cdot \\Delta t$), and solve for $\\Delta T$ in $Q = mc\\Delta T$.",
                     example: `<h4>Step-by-Step Example:</h4>
                     If $P = 100$ W, time $t = 60$ s, water mass $m = 200$ g, $c = 4.184$ J/g°C:<br>
                     1. Heat energy transferred: $Q = P \\cdot t = 100 \\times 60 = 6000$ J<br>
@@ -411,7 +414,7 @@
                     layers: layers,
                     prompt: `Using the <b>R-Value Chart</b> on the right, calculate the combined total thermal resistance (<b>Total R-Value</b>) for a 5-layer exterior wall. Look up each individual material layer value and compute the total sum.`,
                     stepLabel: "Level 6: 5-Layer Wall Assembly R-Value",
-                    formula: "$$ R_{\\text{total}} = \\sum R $$",
+                    formula: "$$ R_{\\text{total}} = \\sum R_{\\text{direct}} + \\sum (R_{\\text{per in}} \\times \\text{Thickness}) $$",
                     valBoxes: [
                         { label: "Exterior", value: "Wood Bevel Siding" },
                         { label: "Sheathing", value: "1/2 in. OSB" },
@@ -420,7 +423,7 @@
                     ],
                     target: totalR,
                     unitHint: "R",
-                    hint: "💡 <b>Hint:</b> Note that cavity insulation specifies R-value <i>per inch</i>. You must account for layer thickness before summing all layers.",
+                    hint: "💡 <b>Hint:</b> Note that cavity insulation specifies R-value <i>per inch</i>. Multiply per-inch values by layer thickness in inches before adding.",
                     example: `<h4>Step-by-Step Example:</h4>
                     If siding = 0.8, sheathing = 0.63, insulation = 3.14/in × 3.5 in (10.99), drywall = 0.45, air = 0.68:<br>
                     $R_{\\text{total}} = 0.8 + 0.63 + 10.99 + 0.45 + 0.68 = 13.55$.`
@@ -452,7 +455,7 @@
                     layers: layers,
                     prompt: `Using the <b>R-Value Chart</b>, calculate the total thermal resistance (<b>Total R-Value</b>) for a <b>high-efficiency 7-layer building envelope wall</b> shown in the visual cross-section diagram.`,
                     stepLabel: "Level 7: 7-Layer Building Envelope R-Value",
-                    formula: "$$ R_{\\text{total}} = \\sum R $$",
+                    formula: "$$ R_{\\text{total}} = \\sum R_{\\text{direct}} + \\sum (R_{\\text{per in}} \\times \\text{Thickness}) $$",
                     valBoxes: [
                         { label: "Exterior", value: `${sidingMat.name} + Air Film` },
                         { label: "Continuous", value: continuousRigid.name },
@@ -495,7 +498,6 @@
             document.getElementById('scenarioTitle').innerText = "Level " + (window.score + 1);
             document.getElementById('promptText').innerHTML = problem.prompt;
             document.getElementById('stepLabel').innerText = problem.stepLabel;
-            document.getElementById('formulaBar').innerHTML = problem.formula;
 
             for (let i = 0; i < 4; i++) {
                 const box = problem.valBoxes[i];
@@ -517,12 +519,14 @@
             const fb = document.getElementById('fb1');
             const hintBox = document.getElementById('hintBox');
             const exampleBox = document.getElementById('exampleBox');
+            const formulaBar = document.getElementById('formulaBar');
 
             if (isClose(input, window.p.target)) {
                 fb.innerText = "✅ Correct! Answer = " + window.p.target + " " + window.p.unitHint;
                 fb.className = "feedback correct";
                 hintBox.style.display = "none";
                 exampleBox.style.display = "none";
+                formulaBar.style.display = "none";
                 window.score++;
                 localStorage.setItem('score_thermo', window.score);
                 setTimeout(generate, 1500);
@@ -532,6 +536,8 @@
                 fb.className = "feedback incorrect";
 
                 if (window.incorrectAttempts >= 1) {
+                    formulaBar.innerHTML = "<b>Target Formula:</b> " + window.p.formula;
+                    formulaBar.style.display = "block";
                     hintBox.innerHTML = window.p.hint;
                     hintBox.style.display = "block";
                 }
@@ -553,6 +559,10 @@
             const fb = document.getElementById('fb1');
             fb.style.display = "none";
             fb.className = "feedback";
+
+            const formulaBar = document.getElementById('formulaBar');
+            formulaBar.style.display = "none";
+            formulaBar.innerHTML = "";
 
             const hintBox = document.getElementById('hintBox');
             hintBox.style.display = "none";
