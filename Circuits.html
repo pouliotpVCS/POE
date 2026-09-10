@@ -11,7 +11,7 @@
     <style>
         :root { --primary: #1a3a5a; --accent: #d9480f; --bg: #f8f9fa; --card: #ffffff; }
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background-color: var(--bg); color: #212529; overflow: hidden; }
-        .wrapper { display: grid; grid-template-columns: 1.2fr 1fr 480px; height: 100vh; gap: 15px; padding: 15px; box-sizing: border-box; }
+        .wrapper { display: grid; grid-template-columns: 1.1fr 1.1fr 450px; height: 100vh; gap: 15px; padding: 15px; box-sizing: border-box; }
         .work-area { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-y: auto; }
         .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); margin-bottom: 15px; padding-bottom: 10px; }
         .btn-back { background: #6c757d; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
@@ -21,7 +21,7 @@
         .val-data { font-size: 0.85em; font-weight: 800; color: #1a3a5a; word-break: break-word; }
         .prompt-text { background: #fff8ec; border: 1px solid #f1e2c0; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.95em; line-height: 1.4; }
         .step { border: 2px solid var(--primary); padding: 15px; margin-bottom: 12px; border-radius: 8px; background: #fff; }
-        .formula-bar { background: #343a40; color: #00ffc3; padding: 12px; border-radius: 4px; text-align: center; margin: 10px 0; min-height: 50px; display: none; }
+        .formula-bar { background: #343a40; color: #00ffc3; padding: 12px; border-radius: 4px; text-align: center; margin: 10px 0; min-height: 40px; display: none; }
         .feedback { margin-top: 8px; padding: 8px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold; display: none; }
         .correct { background: #d3f9d8; color: #2b8a3e; display: block !important; }
         .incorrect { background: #f8d7da; color: #721c24; display: block !important; }
@@ -32,11 +32,15 @@
 
         input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 140px; }
         button { padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
-        .side-panel { background: white; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-        .ref-title { font-weight: bold; color: #1a3a5a; margin-bottom: 10px; align-self: flex-start; }
-        .ref-eq { background: #f1f4f8; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; width: 100%; box-sizing: border-box; text-align: center; }
-        .scene { display: none; width: 100%; }
-        .scene.active { display: block; }
+        
+        /* Side Panel Canvas Setup */
+        .side-panel { background: white; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+        .canvas-container { position: relative; width: 100%; height: 320px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
+        canvas { width: 100%; height: 100%; cursor: pointer; }
+        .meter-readout { background: #212529; color: #00ffc3; font-family: monospace; font-size: 1.2em; padding: 6px 12px; border-radius: 4px; margin-top: 8px; width: 90%; text-align: center; border: 2px solid #495057; }
+
+        .ref-title { font-weight: bold; color: #1a3a5a; margin: 10px 0 5px 0; align-self: flex-start; }
+        .ref-eq { background: #f1f4f8; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; width: 100%; box-sizing: border-box; text-align: center; font-size: 0.9em; }
         iframe { width: 100%; height: 100%; border: none; filter: invert(0.9) hue-rotate(180deg); }
     </style>
 </head>
@@ -71,73 +75,16 @@
         </div>
 
         <div class="side-panel">
-            <!-- Scene 1: Basic Ohm's Law -->
-            <div id="sceneOhms" class="scene">
-                <div class="ref-title">Basic DC Circuit</div>
-                <svg width="260" height="160" viewBox="0 0 260 160">
-                    <rect x="20" y="20" width="220" height="120" fill="none" stroke="#1a3a5a" stroke-width="3" />
-                    <!-- DC Source -->
-                    <circle cx="20" cy="80" r="16" fill="#fff" stroke="#1a3a5a" stroke-width="3" />
-                    <text x="20" y="84" font-size="12" text-anchor="middle" font-weight="bold" fill="#d9480f">Vs</text>
-                    <!-- Resistor -->
-                    <rect x="110" y="10" width="40" height="20" fill="#e8b06b" stroke="#8a5a2b" stroke-width="2"/>
-                    <text x="130" y="25" font-size="11" text-anchor="middle" font-weight="bold" fill="#1a3a5a">R</text>
-                </svg>
+            <div style="font-weight: bold; color: #1a3a5a; margin-bottom: 5px;">Interactive Multimeter Workbench</div>
+            <div style="font-size: 0.75em; color: #6c757d; margin-bottom: 8px;">Drag 🔴 and 🖤 probes to circuit test points to measure voltage.</div>
+            
+            <div class="canvas-container">
+                <canvas id="circuitCanvas"></canvas>
             </div>
+            
+            <div class="meter-readout" id="meterDisplay">MULTIMETER: 0.00 V</div>
 
-            <!-- Scene 2: Series Circuit -->
-            <div id="sceneSeries" class="scene">
-                <div class="ref-title">Series Circuit Configuration</div>
-                <svg width="260" height="160" viewBox="0 0 260 160">
-                    <rect x="20" y="20" width="220" height="120" fill="none" stroke="#1a3a5a" stroke-width="3" />
-                    <circle cx="20" cy="80" r="16" fill="#fff" stroke="#1a3a5a" stroke-width="3" />
-                    <text x="20" y="84" font-size="12" text-anchor="middle" font-weight="bold" fill="#d9480f">Vs</text>
-                    <!-- Resistor 1 -->
-                    <rect x="80" y="10" width="35" height="20" fill="#e8b06b" stroke="#8a5a2b" stroke-width="2"/>
-                    <text x="97" y="25" font-size="10" text-anchor="middle" font-weight="bold">R1</text>
-                    <!-- Resistor 2 -->
-                    <rect x="150" y="10" width="35" height="20" fill="#e8b06b" stroke="#8a5a2b" stroke-width="2"/>
-                    <text x="167" y="25" font-size="10" text-anchor="middle" font-weight="bold">R2</text>
-                </svg>
-            </div>
-
-            <!-- Scene 3: Parallel Circuit -->
-            <div id="sceneParallel" class="scene">
-                <div class="ref-title">Parallel Circuit Configuration</div>
-                <svg width="260" height="160" viewBox="0 0 260 160">
-                    <rect x="20" y="20" width="220" height="120" fill="none" stroke="#1a3a5a" stroke-width="3" />
-                    <line x1="130" y1="20" x2="130" y2="140" stroke="#1a3a5a" stroke-width="3" />
-                    <circle cx="20" cy="80" r="16" fill="#fff" stroke="#1a3a5a" stroke-width="3" />
-                    <text x="20" y="84" font-size="12" text-anchor="middle" font-weight="bold" fill="#d9480f">Vs</text>
-                    <!-- Branch 1 -->
-                    <rect x="120" y="60" width="20" height="40" fill="#e8b06b" stroke="#8a5a2b" stroke-width="2"/>
-                    <text x="130" y="52" font-size="10" text-anchor="middle" font-weight="bold">R1</text>
-                    <!-- Branch 2 -->
-                    <rect x="230" y="60" width="20" height="40" fill="#e8b06b" stroke="#8a5a2b" stroke-width="2"/>
-                    <text x="240" y="52" font-size="10" text-anchor="middle" font-weight="bold">R2</text>
-                </svg>
-            </div>
-
-            <!-- Scene 4: Combination Circuit -->
-            <div id="sceneCombo" class="scene">
-                <div class="ref-title">Series-Parallel Network</div>
-                <svg width="260" height="160" viewBox="0 0 260 160">
-                    <rect x="20" y="20" width="220" height="120" fill="none" stroke="#1a3a5a" stroke-width="3" />
-                    <line x1="170" y1="20" x2="170" y2="140" stroke="#1a3a5a" stroke-width="3" />
-                    <circle cx="20" cy="80" r="16" fill="#fff" stroke="#1a3a5a" stroke-width="3" />
-                    <!-- R1 Series -->
-                    <rect x="70" y="10" width="35" height="20" fill="#e8b06b" stroke="#8a5a2b" stroke-width="2"/>
-                    <text x="87" y="25" font-size="10" text-anchor="middle" font-weight="bold">R1</text>
-                    <!-- R2 Parallel -->
-                    <rect x="160" y="60" width="20" height="40" fill="#e8b06b" stroke="#8a5a2b" stroke-width="2"/>
-                    <text x="170" y="52" font-size="10" text-anchor="middle" font-weight="bold">R2</text>
-                    <!-- R3 Parallel -->
-                    <rect x="230" y="60" width="20" height="40" fill="#e8b06b" stroke="#8a5a2b" stroke-width="2"/>
-                    <text x="240" y="52" font-size="10" text-anchor="middle" font-weight="bold">R3</text>
-                </svg>
-            </div>
-
-            <div style="width:100%; margin-top:10px;">
+            <div style="width:100%;">
                 <div class="ref-title">Reference Equations</div>
                 <div class="ref-eq">$$V = I \cdot R$$</div>
                 <div class="ref-eq">$$P = V \cdot I = I^2 R$$</div>
@@ -160,16 +107,155 @@
         function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
         function round(n, d) { const f = Math.pow(10, d); return Math.round(n * f) / f; }
 
+        // --- Interactive Canvas Multimeter Setup ---
+        const canvas = document.getElementById('circuitCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        let nodes = [];
+        let redProbe = { x: 50, y: 280, radius: 10, dragging: false, label: "RED", connectedNode: null };
+        let blackProbe = { x: 90, y: 280, radius: 10, dragging: false, label: "BLK", connectedNode: null };
+
+        function initNodes(problem) {
+            // Define test nodes on canvas depending on problem level
+            const w = canvas.width || 300;
+            if (problem.category === "ohms") {
+                nodes = [
+                    { id: "A", x: 60, y: 100, v: problem.Vs, name: "Vs (+)" },
+                    { id: "B", x: 60, y: 220, v: 0, name: "GND (-)" },
+                    { id: "C", x: 220, y: 100, v: problem.Vs, name: "Node R-Top" },
+                    { id: "D", x: 220, y: 220, v: 0, name: "Node R-Bot" }
+                ];
+            } else if (problem.category === "series") {
+                nodes = [
+                    { id: "A", x: 50, y: 100, v: problem.Vs, name: "Vs (+)" },
+                    { id: "B", x: 50, y: 220, v: 0, name: "GND (-)" },
+                    { id: "C", x: 140, y: 100, v: problem.Vs - problem.VR1, name: "Mid Node (Between R1/R2)" },
+                    { id: "D", x: 240, y: 220, v: 0, name: "Node R2-Bot" }
+                ];
+            } else {
+                nodes = [
+                    { id: "A", x: 60, y: 100, v: problem.Vs, name: "Vs (+)" },
+                    { id: "B", x: 60, y: 220, v: 0, name: "GND (-)" },
+                    { id: "C", x: 180, y: 100, v: problem.Vs, name: "Top Rail" },
+                    { id: "D", x: 180, y: 220, v: 0, name: "Bottom Rail" }
+                ];
+            }
+            redProbe.x = 40; redProbe.y = 280; redProbe.connectedNode = null;
+            blackProbe.x = 90; blackProbe.y = 280; blackProbe.connectedNode = null;
+        }
+
+        function drawCircuit() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Wire Loop
+            ctx.strokeStyle = "#1a3a5a";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.rect(50, 60, canvas.width - 100, 160);
+            ctx.stroke();
+
+            // Draw Nodes
+            nodes.forEach(n => {
+                ctx.fillStyle = "#d9480f";
+                ctx.beginPath();
+                ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#212529";
+                ctx.font = "10px sans-serif";
+                ctx.fillText(n.name, n.x - 15, n.y - 10);
+            });
+
+            // Draw Leads to Probes
+            drawLead(redProbe, "#d90429");
+            drawLead(blackProbe, "#212529");
+
+            // Draw Probes
+            drawProbeCircle(redProbe, "#d90429");
+            drawProbeCircle(blackProbe, "#212529");
+
+            updateMultimeterDisplay();
+        }
+
+        function drawLead(probe, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 290);
+            ctx.lineTo(probe.x, probe.y);
+            ctx.stroke();
+        }
+
+        function drawProbeCircle(probe, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(probe.x, probe.y, probe.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 9px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(probe.label, probe.x, probe.y + 3);
+            ctx.textAlign = "start";
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(e);
+            if (Math.hypot(pos.x - redProbe.x, pos.y - redProbe.y) < 15) redProbe.dragging = true;
+            else if (Math.hypot(pos.x - blackProbe.x, pos.y - blackProbe.y) < 15) blackProbe.dragging = true;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const pos = getMousePos(e);
+            if (redProbe.dragging) { redProbe.x = pos.x; redProbe.y = pos.y; checkNodeSnap(redProbe); drawCircuit(); }
+            if (blackProbe.dragging) { blackProbe.x = pos.x; blackProbe.y = pos.y; checkNodeSnap(blackProbe); drawCircuit(); }
+        });
+
+        window.addEventListener('mouseup', () => {
+            redProbe.dragging = false;
+            blackProbe.dragging = false;
+        });
+
+        function checkNodeSnap(probe) {
+            probe.connectedNode = null;
+            nodes.forEach(n => {
+                if (Math.hypot(probe.x - n.x, probe.y - n.y) < 18) {
+                    probe.x = n.x;
+                    probe.y = n.y;
+                    probe.connectedNode = n;
+                }
+            });
+        }
+
+        function updateMultimeterDisplay() {
+            const display = document.getElementById('meterDisplay');
+            if (redProbe.connectedNode && blackProbe.connectedNode) {
+                const diff = Math.abs(redProbe.connectedNode.v - blackProbe.connectedNode.v);
+                display.innerText = `MULTIMETER: ${diff.toFixed(2)} V`;
+            } else {
+                display.innerText = `MULTIMETER: 0.00 V (Connect both probes)`;
+            }
+        }
+
+        // --- Problem Generators ---
         const TYPE_BUILDERS = [
-            // Level 1: Find Current (Ohm's Law)
             function () {
                 const Vs = randInt(6, 24);
                 const R = randInt(10, 50);
                 const target = round(Vs / R, 3);
                 return {
-                    category: "ohms",
-                    prompt: `A simple DC circuit consists of a single resistor $R = ${R}\\ \\Omega$ connected across a power source $V_s = ${Vs}\\text{ V}$. Calculate the total current ($I$) flowing through the circuit in Amperes.`,
-                    stepLabel: "Level 1: Basic Ohm's Law (Finding Current)",
+                    category: "ohms", Vs: Vs,
+                    prompt: `A simple DC circuit has $R = ${R}\\ \\Omega$ and source $V_s = ${Vs}\\text{ V}$. Use the multimeter to measure potential across the nodes, then calculate the circuit current ($I$).`,
+                    stepLabel: "Level 1: Basic Ohm's Law",
                     formula: "$$ I = \\frac{V}{R} $$",
                     valBoxes: [
                         { label: "Voltage (Vs)", value: Vs + " V" },
@@ -177,23 +263,19 @@
                         { label: "Find", value: "Current (I)" },
                         { label: "--", value: "--" }
                     ],
-                    target: target,
-                    unitHint: "A",
-                    hint: "💡 <b>Hint:</b> Use Ohm's Law $V = I \\cdot R$ and solve for current: $I = \\frac{V}{R}$.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $V = 12\\text{ V}$ and $R = 24\\ \\Omega$:<br>
-                    $I = \\frac{12}{24} = 0.5\\text{ A}$.`
+                    target: target, unitHint: "A",
+                    hint: "💡 <b>Hint:</b> Divide voltage by resistance: $I = \\frac{V}{R}$.",
+                    example: "<h4>Step-by-Step Example:</h4>$I = \\frac{12}{24} = 0.5\\text{ A}$."
                 };
             },
-            // Level 2: Find Resistance (Ohm's Law)
             function () {
                 const Vs = randInt(10, 30);
                 const I = round(rand(0.2, 1.5), 2);
                 const target = round(Vs / I, 2);
                 return {
-                    category: "ohms",
-                    prompt: `A circuit powered by a $V_s = ${Vs}\\text{ V}$ source draws a total current of $I = ${I}\\text{ A}$. Calculate the total resistance ($R$) of the load in Ohms ($\\Omega$).`,
-                    stepLabel: "Level 2: Basic Ohm's Law (Finding Resistance)",
+                    category: "ohms", Vs: Vs,
+                    prompt: `A circuit with $V_s = ${Vs}\\text{ V}$ draws $I = ${I}\\text{ A}$. Calculate the total resistance ($R$).`,
+                    stepLabel: "Level 2: Finding Resistance",
                     formula: "$$ R = \\frac{V}{I} $$",
                     valBoxes: [
                         { label: "Voltage (Vs)", value: Vs + " V" },
@@ -201,162 +283,43 @@
                         { label: "Find", value: "Resistance (R)" },
                         { label: "--", value: "--" }
                     ],
-                    target: target,
-                    unitHint: "\u03A9",
-                    hint: "💡 <b>Hint:</b> Rearrange Ohm's Law ($V = I \\cdot R$) to isolate resistance ($R = \\frac{V}{I}$).",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $V = 20\\text{ V}$ and $I = 0.8\\text{ A}$:<br>
-                    $R = \\frac{20}{0.8} = 25\\ \\Omega$.`
+                    target: target, unitHint: "\u03A9",
+                    hint: "💡 <b>Hint:</b> Use $R = \\frac{V}{I}$.",
+                    example: "<h4>Step-by-Step Example:</h4>$R = \\frac{20}{0.8} = 25\\ \\Omega$."
                 };
             },
-            // Level 3: Series Voltage Drop
             function () {
                 const Vs = randInt(12, 36);
-                const R1 = randInt(10, 40);
-                const R2 = randInt(10, 40);
-                const Req = R1 + R2;
-                const I = Vs / Req;
+                const R1 = randInt(10, 30);
+                const R2 = randInt(10, 30);
+                const I = Vs / (R1 + R2);
+                const VR1 = I * R1;
                 const VR2 = round(I * R2, 2);
                 return {
-                    category: "series",
-                    prompt: `Two resistors $R_1 = ${R1}\\ \\Omega$ and $R_2 = ${R2}\\ \\Omega$ are connected in series across a $V_s = ${Vs}\\text{ V}$ supply. Calculate the voltage drop across $R_2$ ($V_{R2}$) in Volts.`,
+                    category: "series", Vs: Vs, VR1: VR1,
+                    prompt: `Two series resistors $R_1 = ${R1}\\ \\Omega$ and $R_2 = ${R2}\\ \\Omega$ are connected across $V_s = ${Vs}\\text{ V}$. Drag the multimeter probes to measure node voltages and calculate $V_{R2}$.`,
                     stepLabel: "Level 3: Series Voltage Drop",
-                    formula: "$$ R_{\\text{eq}} = R_1 + R_2, \\quad I = \\frac{V_s}{R_{\\text{eq}}}, \\quad V_{R2} = I \\cdot R_2 $$",
+                    formula: "$$ V_{R2} = I \\cdot R_2 $$",
                     valBoxes: [
                         { label: "Voltage (Vs)", value: Vs + " V" },
                         { label: "Resistor 1", value: R1 + " \u03A9" },
                         { label: "Resistor 2", value: R2 + " \u03A9" },
                         { label: "Find", value: "V_R2 (V)" }
                     ],
-                    target: VR2,
-                    unitHint: "V",
-                    hint: "💡 <b>Hint:</b> 1. Add resistances to find $R_{\\text{eq}}$.<br>2. Calculate total circuit current ($I = \\frac{V_s}{R_{\\text{eq}}}$).<br>3. Solve for $V_{R2} = I \\cdot R_2$.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $V_s = 18\\text{ V}$, $R_1 = 10\\ \\Omega$, $R_2 = 20\\ \\Omega$:<br>
-                    1. $R_{\\text{eq}} = 10 + 20 = 30\\ \\Omega$<br>
-                    2. $I = \\frac{18}{30} = 0.6\\text{ A}$<br>
-                    3. $V_{R2} = 0.6 \\times 20 = 12\\text{ V}$.`
-                };
-            },
-            // Level 4: Parallel Equivalent Resistance
-            function () {
-                const R1 = randInt(10, 50);
-                const R2 = randInt(10, 50);
-                const target = round((R1 * R2) / (R1 + R2), 2);
-                return {
-                    category: "parallel",
-                    prompt: `Two resistors $R_1 = ${R1}\\ \\Omega$ and $R_2 = ${R2}\\ \\Omega$ are wired in parallel. Calculate the total equivalent resistance ($R_{\\text{eq}}$) of this parallel block in Ohms ($\\Omega$).`,
-                    stepLabel: "Level 4: Equivalent Resistance (Parallel)",
-                    formula: "$$ R_{\\text{eq}} = \\frac{R_1 \\cdot R_2}{R_1 + R_2} $$",
-                    valBoxes: [
-                        { label: "Resistor 1", value: R1 + " \u03A9" },
-                        { label: "Resistor 2", value: R2 + " \u03A9" },
-                        { label: "Find", value: "Req (\u03A9)" },
-                        { label: "--", value: "--" }
-                    ],
-                    target: target,
-                    unitHint: "\u03A9",
-                    hint: "💡 <b>Hint:</b> Use the product-over-sum rule for two parallel resistors: $R_{\\text{eq}} = \\frac{R_1 \\cdot R_2}{R_1 + R_2}$.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $R_1 = 20\\ \\Omega$ and $R_2 = 30\\ \\Omega$:<br>
-                    $R_{\\text{eq}} = \\frac{20 \\times 30}{20 + 30} = \\frac{600}{50} = 12\\ \\Omega$.`
-                };
-            },
-            // Level 5: Parallel Branch Current
-            function () {
-                const Vs = randInt(12, 24);
-                const R1 = randInt(15, 40);
-                const R2 = randInt(15, 40);
-                const target = round(Vs / R1, 3);
-                return {
-                    category: "parallel",
-                    prompt: `A parallel circuit powered by $V_s = ${Vs}\\text{ V}$ contains branch resistors $R_1 = ${R1}\\ \\Omega$ and $R_2 = ${R2}\\ \\Omega$. Calculate the current flowing specifically through branch $R_1$ ($I_1$) in Amperes.`,
-                    stepLabel: "Level 5: Parallel Branch Current",
-                    formula: "$$ I_1 = \\frac{V_s}{R_1} $$",
-                    valBoxes: [
-                        { label: "Voltage (Vs)", value: Vs + " V" },
-                        { label: "Branch R1", value: R1 + " \u03A9" },
-                        { label: "Branch R2", value: R2 + " \u03A9" },
-                        { label: "Find", value: "Branch I1 (A)" }
-                    ],
-                    target: target,
-                    unitHint: "A",
-                    hint: "💡 <b>Hint:</b> In a parallel circuit, full source voltage ($V_s$) is applied directly across every parallel branch.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $V_s = 12\\text{ V}$ and $R_1 = 24\\ \\Omega$:<br>
-                    $I_1 = \\frac{12}{24} = 0.5\\text{ A}$.`
-                };
-            },
-            // Level 6: Combination Series-Parallel Total Current
-            function () {
-                const Vs = randInt(12, 36);
-                const R1 = randInt(10, 25);
-                const R2 = randInt(20, 40);
-                const R3 = R2; // simplify equal parallel pair
-                const Rp = R2 / 2;
-                const Req = R1 + Rp;
-                const target = round(Vs / Req, 3);
-                return {
-                    category: "combo",
-                    prompt: `In a combination network, resistor $R_1 = ${R1}\\ \\Omega$ is in series with a parallel pair $R_2 = ${R2}\\ \\Omega$ and $R_3 = ${R3}\\ \\Omega$. If $V_s = ${Vs}\\text{ V}$, calculate total source current ($I_{\\text{total}}$) in Amperes.`,
-                    stepLabel: "Level 6: Series-Parallel Combination Network",
-                    formula: "$$ R_p = \\frac{R_2 \\cdot R_3}{R_2 + R_3}, \\quad R_{\\text{total}} = R_1 + R_p, \\quad I = \\frac{V_s}{R_{\\text{total}}} $$",
-                    valBoxes: [
-                        { label: "Voltage (Vs)", value: Vs + " V" },
-                        { label: "Series R1", value: R1 + " \u03A9" },
-                        { label: "Parallel R2, R3", value: R2 + " \u03A9 each" },
-                        { label: "Find", value: "Itotal (A)" }
-                    ],
-                    target: target,
-                    unitHint: "A",
-                    hint: "💡 <b>Hint:</b> 1. Simplify parallel block ($R_p = \\frac{R_2}{2}$).<br>2. Add series $R_1$ ($R_{\\text{total}} = R_1 + R_p$).<br>3. Solve $I = \\frac{V_s}{R_{\\text{total}}}$.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $V_s = 20\\text{ V}$, $R_1 = 10\\ \\Omega$, $R_2 = 20\\ \\Omega$, $R_3 = 20\\ \\Omega$:<br>
-                    1. $R_p = 10\\ \\Omega$<br>
-                    2. $R_{\\text{total}} = 10 + 10 = 20\\ \\Omega$<br>
-                    3. $I = \\frac{20}{20} = 1.0\\text{ A}$.`
-                };
-            },
-            // Level 7: Electrical Power Dissipation
-            function () {
-                const Vs = randInt(10, 24);
-                const R = randInt(8, 20);
-                const target = round((Vs * Vs) / R, 2);
-                return {
-                    category: "ohms",
-                    prompt: `A heating element with resistance $R = ${R}\\ \\Omega$ is connected across a $V_s = ${Vs}\\text{ V}$ supply. Calculate total electrical power ($P$) dissipated in Watts (W).`,
-                    stepLabel: "Level 7: Electrical Power Dissipation",
-                    formula: "$$ P = \\frac{V^2}{R} \\quad \\text{or} \\quad P = V \\cdot I $$",
-                    valBoxes: [
-                        { label: "Voltage (Vs)", value: Vs + " V" },
-                        { label: "Resistance (R)", value: R + " \u03A9" },
-                        { label: "Find", value: "Power (W)" },
-                        { label: "--", value: "--" }
-                    ],
-                    target: target,
-                    unitHint: "W",
-                    hint: "💡 <b>Hint:</b> Use power equation $P = \\frac{V^2}{R}$ or calculate current first ($I = \\frac{V}{R}$) and multiply $P = V \\cdot I$.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $V = 12\\text{ V}$ and $R = 6\\ \\Omega$:<br>
-                    $P = \\frac{12^2}{6} = \\frac{144}{6} = 24\\text{ W}$.`
+                    target: VR2, unitHint: "V",
+                    hint: "💡 <b>Hint:</b> Find total current first ($I = \\frac{V}{R_1 + R_2}$), then calculate $V_{R2} = I \\cdot R_2$.",
+                    example: "<h4>Step-by-Step Example:</h4>$R_{\\text{eq}} = 10 + 20 = 30\\ \\Omega \\implies I = 0.6\\text{ A} \\implies V_{R2} = 12\\text{ V}$."
                 };
             }
         ];
 
         function isClose(input, target) {
             if (isNaN(input)) return false;
-            const tol = Math.max(Math.abs(target) * 0.03, 0.02);
-            return Math.abs(input - target) <= tol;
-        }
-
-        function showScene(problem) {
-            document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-            const map = { ohms: 'sceneOhms', series: 'sceneSeries', parallel: 'sceneParallel', combo: 'sceneCombo' };
-            document.getElementById(map[problem.category]).classList.add('active');
+            return Math.abs(input - target) <= Math.max(Math.abs(target) * 0.03, 0.02);
         }
 
         function generate(keepHints = false) {
-            if (window.score >= 7) { alert("Mastery Achieved! You have completed all levels."); window.location.href = "index.html"; return; }
+            if (window.score >= 3) { alert("Mastery Achieved! Level 3 Completed."); window.location.href = "index.html"; return; }
 
             const problem = TYPE_BUILDERS[window.score % TYPE_BUILDERS.length]();
             window.p = problem;
@@ -371,69 +334,52 @@
                 document.getElementById('val' + (i + 1)).innerText = box.value || "";
             }
 
-            showScene(problem);
+            resizeCanvas();
+            initNodes(problem);
+            drawCircuit();
 
             if (!keepHints) {
                 window.incorrectAttempts = 0;
                 resetUI(problem.unitHint);
             } else {
                 document.getElementById('in1').value = "";
-                document.getElementById('in1').placeholder = "answer (" + problem.unitHint + ")";
-                const formulaBar = document.getElementById('formulaBar');
-                formulaBar.innerHTML = "<b>Target Formula:</b> " + problem.formula;
-                formulaBar.style.display = "block";
-
-                const hintBox = document.getElementById('hintBox');
-                hintBox.innerHTML = problem.hint;
-                hintBox.style.display = "block";
-
-                const exampleBox = document.getElementById('exampleBox');
-                exampleBox.innerHTML = problem.example;
-                exampleBox.style.display = "block";
+                document.getElementById('formulaBar').innerHTML = "<b>Target Formula:</b> " + problem.formula;
+                document.getElementById('formulaBar').style.display = "block";
+                document.getElementById('hintBox').innerHTML = problem.hint;
+                document.getElementById('hintBox').style.display = "block";
+                document.getElementById('exampleBox').innerHTML = problem.example;
+                document.getElementById('exampleBox').style.display = "block";
             }
 
-            if (window.MathJax && window.MathJax.typesetPromise) {
-                window.MathJax.typesetPromise();
-            }
+            if (window.MathJax && window.MathJax.typesetPromise) window.MathJax.typesetPromise();
         }
 
         window.check1 = function () {
             const input = parseFloat(document.getElementById('in1').value);
             const fb = document.getElementById('fb1');
-            const hintBox = document.getElementById('hintBox');
-            const exampleBox = document.getElementById('exampleBox');
-            const formulaBar = document.getElementById('formulaBar');
 
             if (isClose(input, window.p.target)) {
                 fb.innerText = "✅ Correct! Answer = " + window.p.target + " " + window.p.unitHint;
                 fb.className = "feedback correct";
-                hintBox.style.display = "none";
-                exampleBox.style.display = "none";
-                formulaBar.style.display = "none";
+                document.getElementById('hintBox').style.display = "none";
+                document.getElementById('exampleBox').style.display = "none";
+                document.getElementById('formulaBar').style.display = "none";
                 window.score++;
                 localStorage.setItem('score_circuits', window.score);
                 setTimeout(() => generate(false), 1500);
             } else {
                 window.incorrectAttempts++;
-
                 if (window.incorrectAttempts === 1) {
                     fb.innerText = "❌ Incorrect. Try again!";
                     fb.className = "feedback incorrect";
-                    formulaBar.innerHTML = "<b>Target Formula:</b> " + window.p.formula;
-                    formulaBar.style.display = "block";
-                    hintBox.innerHTML = window.p.hint;
-                    hintBox.style.display = "block";
+                    document.getElementById('formulaBar').innerHTML = "<b>Target Formula:</b> " + window.p.formula;
+                    document.getElementById('formulaBar').style.display = "block";
+                    document.getElementById('hintBox').innerHTML = window.p.hint;
+                    document.getElementById('hintBox').style.display = "block";
                 } else if (window.incorrectAttempts >= 2) {
-                    fb.innerText = "❌ Incorrect twice. Generating new numbers! Review the step-by-step example below.";
+                    fb.innerText = "❌ Incorrect twice. Regenerating values...";
                     fb.className = "feedback incorrect";
-                    
-                    setTimeout(() => {
-                        generate(true);
-                    }, 1800);
-                }
-
-                if (window.MathJax && window.MathJax.typesetPromise) {
-                    window.MathJax.typesetPromise();
+                    setTimeout(() => generate(true), 1800);
                 }
             }
         };
@@ -441,24 +387,11 @@
         function resetUI(unitHint) {
             document.getElementById('in1').value = "";
             document.getElementById('in1').placeholder = "answer (" + unitHint + ")";
-            
-            const fb = document.getElementById('fb1');
-            fb.style.display = "none";
-            fb.className = "feedback";
-
-            const formulaBar = document.getElementById('formulaBar');
-            formulaBar.style.display = "none";
-            formulaBar.innerHTML = "";
-
-            const hintBox = document.getElementById('hintBox');
-            hintBox.style.display = "none";
-            hintBox.innerHTML = "";
-
-            const exampleBox = document.getElementById('exampleBox');
-            exampleBox.style.display = "none";
-            exampleBox.innerHTML = "";
-
-            document.getElementById('scoreDisplay').innerText = `Mastery: ${window.score}/7`;
+            document.getElementById('fb1').style.display = "none";
+            document.getElementById('formulaBar').style.display = "none";
+            document.getElementById('hintBox').style.display = "none";
+            document.getElementById('exampleBox').style.display = "none";
+            document.getElementById('scoreDisplay').innerText = `Mastery: ${window.score}/3`;
         }
 
         window.onload = () => generate(false);
