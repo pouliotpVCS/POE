@@ -252,26 +252,36 @@
             // Level 1
             function () {
                 const mat = pick(HEAT_MATERIALS);
-                const m = randInt(100, 800);
+                const useKg = Math.random() < 0.5;
+                const m_g = randInt(100, 800);
+                const m_display = useKg ? round(m_g / 1000, 2) : m_g;
+                const unitStr = useKg ? "kg" : "g";
                 const dT = randInt(5, 35);
-                const target = round(m * mat.c * dT, 1);
+                const target = round(m_g * mat.c * dT, 1);
+
                 return {
                     category: "heat",
-                    prompt: `A ${m} g piece of ${mat.name} (c = ${mat.c} J/g°C) experiences a temperature rise of ${dT}°C. Calculate the total heat energy added in Joules.`,
+                    prompt: `A ${m_display} ${unitStr} piece of ${mat.name} (c = ${mat.c} J/g°C) experiences a temperature rise of ${dT}°C. Calculate the total heat energy added in Joules.`,
                     stepLabel: "Level 1: Heat Transfer",
                     formula: "$$ Q = mc\\Delta T $$",
                     valBoxes: [
-                        { label: "Mass (m)", value: m + " g" },
+                        { label: "Mass (m)", value: m_display + " " + unitStr },
                         { label: "Specific heat (c)", value: mat.c + " J/g\u00B0C" },
                         { label: "\u0394T", value: dT + " \u00B0C" },
                         { label: "Find", value: "Q (J)" }
                     ],
                     target: target,
                     unitHint: "J",
-                    hint: "💡 <b>Hint:</b> Look at the reference equations. Choose the formula relating heat energy ($Q$), mass ($m$), specific heat ($c$), and temperature change ($\\Delta T$).",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    For a 200 g material with $c = 0.5$ J/g°C and $\\Delta T = 10$°C:<br>
-                    $Q = 200 \\times 0.5 \\times 10 = 1000$ J.`
+                    hint: useKg 
+                        ? "💡 <b>Hint:</b> Convert mass from kg to grams first ($1 \\text{ kg} = 1000 \\text{ g}$) to align with $c$ in J/g°C, then use $Q = mc\\Delta T$."
+                        : "💡 <b>Hint:</b> Look at the reference equations. Choose the formula relating heat energy ($Q$), mass ($m$), specific heat ($c$), and temperature change ($\\Delta T$).",
+                    example: useKg 
+                        ? `<h4>Step-by-Step Example:</h4>
+                           For a 0.5 kg material ($0.5 \\times 1000 = 500$ g) with $c = 0.5$ J/g°C and $\\Delta T = 10$°C:<br>
+                           $Q = 500 \\times 0.5 \\times 10 = 2500$ J.`
+                        : `<h4>Step-by-Step Example:</h4>
+                           For a 200 g material with $c = 0.5$ J/g°C and $\\Delta T = 10$°C:<br>
+                           $Q = 200 \\times 0.5 \\times 10 = 1000$ J.`
                 };
             },
             // Level 2
@@ -305,29 +315,40 @@
             // Level 3
             function () {
                 const mat = pick(HEAT_MATERIALS);
-                const m = randInt(200, 800);
+                const useKg = Math.random() < 0.5;
+                const m_g = randInt(200, 800);
+                const m_display = useKg ? round(m_g / 1000, 2) : m_g;
+                const unitStr = useKg ? "kg" : "g";
                 const T_initial = randInt(18, 25);
                 const dT = randInt(10, 35);
-                const Q = round(m * mat.c * dT, 0);
+                const Q = round(m_g * mat.c * dT, 0);
                 const target = round(T_initial + dT, 1);
+
                 return {
                     category: "heat",
-                    prompt: `A ${m} g block of ${mat.name} (c = ${mat.c} J/g°C) starts at ${T_initial}°C. If ${Q} Joules of heat energy are added, what will its <b>final temperature</b> (T<sub>final</sub>) be in °C?`,
+                    prompt: `A ${m_display} ${unitStr} block of ${mat.name} (c = ${mat.c} J/g°C) starts at ${T_initial}°C. If ${Q} Joules of heat energy are added, what will its <b>final temperature</b> (T<sub>final</sub>) be in °C?`,
                     stepLabel: "Level 3: Specific Heat Calculation",
                     formula: "$$ Q = mc\\Delta T $$",
                     valBoxes: [
-                        { label: "Mass (m)", value: m + " g" },
+                        { label: "Mass (m)", value: m_display + " " + unitStr },
                         { label: "Heat (Q)", value: Q + " J" },
                         { label: "Start Temp", value: T_initial + " \u00B0C" },
                         { label: "Find", value: "T_final (\u00B0C)" }
                     ],
                     target: target,
                     unitHint: "\u00B0C",
-                    hint: "💡 <b>Hint:</b> Use $Q = mc\\Delta T$ to solve for temperature change $\\Delta T$ first, then combine it with $T_{\\text{initial}}$.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $m = 100$ g, $c = 0.5$ J/g°C, $Q = 500$ J, and $T_{\\text{initial}} = 20$°C:<br>
-                    1. Rearrange: $\\Delta T = \\frac{Q}{mc} = \\frac{500}{100 \\times 0.5} = 10$°C<br>
-                    2. Calculate $T_{\\text{final}}$: $T_{\\text{final}} = T_{\\text{initial}} + \\Delta T = 20 + 10 = 30$°C.`
+                    hint: useKg 
+                        ? "💡 <b>Hint:</b> Convert mass from kg to grams first ($1 \\text{ kg} = 1000 \\text{ g}$) to match $c$ (J/g°C), solve for $\\Delta T = \\frac{Q}{mc}$, then add to $T_{\\text{initial}}$."
+                        : "💡 <b>Hint:</b> Use $Q = mc\\Delta T$ to solve for temperature change $\\Delta T$ first, then combine it with $T_{\\text{initial}}$.",
+                    example: useKg
+                        ? `<h4>Step-by-Step Example:</h4>
+                           If $m = 0.2$ kg ($200$ g), $c = 0.5$ J/g°C, $Q = 1000$ J, $T_{\\text{initial}} = 20$°C:<br>
+                           1. $\\Delta T = \\frac{Q}{mc} = \\frac{1000}{200 \\times 0.5} = 10$°C<br>
+                           2. $T_{\\text{final}} = T_{\\text{initial}} + \\Delta T = 20 + 10 = 30$°C.`
+                        : `<h4>Step-by-Step Example:</h4>
+                           If $m = 100$ g, $c = 0.5$ J/g°C, $Q = 500$ J, and $T_{\\text{initial}} = 20$°C:<br>
+                           1. Rearrange: $\\Delta T = \\frac{Q}{mc} = \\frac{500}{100 \\times 0.5} = 10$°C<br>
+                           2. Calculate $T_{\\text{final}}$: $T_{\\text{final}} = T_{\\text{initial}} + \\Delta T = 20 + 10 = 30$°C.`
                 };
             },
             // Level 4
@@ -360,6 +381,7 @@
             // Level 5
             function () {
                 const mat = pick(CONDUCT_MATERIALS);
+                const useKg = Math.random() < 0.5;
                 const A = round(rand(0.5, 1.5), 2);
                 const L = round(rand(0.02, 0.05), 3);
                 const dT_wall = randInt(10, 25);
@@ -369,27 +391,37 @@
                 
                 const desired_dT = rand(8, 25);
                 const c_water = 4.184;
-                const water_mass = Math.round(Q / (c_water * desired_dT));
-                const actual_dT = round(Q / (water_mass * c_water), 1);
+                const water_mass_g = Math.round(Q / (c_water * desired_dT));
+                const water_mass_display = useKg ? round(water_mass_g / 1000, 3) : water_mass_g;
+                const unitStr = useKg ? "kg" : "g";
+                const actual_dT = round(Q / (water_mass_g * c_water), 1);
 
                 return {
                     category: "conduct",
-                    prompt: `Heat conducts through a ${mat.name} panel (k = ${mat.k} W/m°C) with area ${A} m² and thickness ${L} m (temp diff ${dT_wall}°C) into a container holding ${water_mass} g of water (c = 4.184 J/g°C) for ${time_sec} seconds. Calculate the <b>temperature rise (&Delta;T) of the water</b> in °C.`,
+                    prompt: `Heat conducts through a ${mat.name} panel (k = ${mat.k} W/m°C) with area ${A} m² and thickness ${L} m (temp diff ${dT_wall}°C) into a container holding ${water_mass_display} ${unitStr} of water (c = 4.184 J/g°C) for ${time_sec} seconds. Calculate the <b>temperature rise (&Delta;T) of the water</b> in °C.`,
                     stepLabel: "Level 5: Multistep Heat & Conduction",
                     formula: "$$ P = \\frac{kA\\Delta T}{L} \\quad \\text{and} \\quad Q = mc\\Delta T $$",
                     valBoxes: [
                         { label: "Wall Area", value: A + " m\u00B2" },
                         { label: "Wall Thickness", value: L + " m" },
-                        { label: "Water Mass", value: water_mass + " g" },
+                        { label: "Water Mass", value: water_mass_display + " " + unitStr },
                         { label: "Time Span", value: time_sec + " s" }
                     ],
                     target: actual_dT,
                     unitHint: "\u00B0C",
-                    hint: "💡 <b>Hint:</b> Combine two reference formulas. Find conduction power $P$, calculate total heat transferred ($Q = P \\cdot \\Delta t$), and solve for $\\Delta T$ in $Q = mc\\Delta T$.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $P = 100$ W, time $t = 60$ s, water mass $m = 200$ g, $c = 4.184$ J/g°C:<br>
-                    1. Heat energy transferred: $Q = P \\cdot t = 100 \\times 60 = 6000$ J<br>
-                    2. Rearrange $Q = mc\\Delta T \\Rightarrow \\Delta T = \\frac{Q}{mc} = \\frac{6000}{200 \\times 4.184} = 7.2$°C.`
+                    hint: useKg
+                        ? "💡 <b>Hint:</b> Compute heat $Q = P \\cdot \\Delta t$. Convert water mass from kg to grams ($1 \\text{ kg} = 1000 \\text{ g}$), then use $Q = mc\\Delta T$ to solve for $\\Delta T$."
+                        : "💡 <b>Hint:</b> Combine two reference formulas. Find conduction power $P$, calculate total heat transferred ($Q = P \\cdot \\Delta t$), and solve for $\\Delta T$ in $Q = mc\\Delta T$.",
+                    example: useKg
+                        ? `<h4>Step-by-Step Example:</h4>
+                           If $P = 100$ W, $t = 60$ s, water mass = $0.2$ kg ($200$ g), $c = 4.184$ J/g°C:<br>
+                           1. Heat energy transferred: $Q = 100 \\times 60 = 6000$ J<br>
+                           2. Convert mass: $0.2 \\text{ kg} = 200 \\text{ g}$<br>
+                           3. Solve $\\Delta T = \\frac{6000}{200 \\times 4.184} = 7.2$°C.`
+                        : `<h4>Step-by-Step Example:</h4>
+                           If $P = 100$ W, time $t = 60$ s, water mass $m = 200$ g, $c = 4.184$ J/g°C:<br>
+                           1. Heat energy transferred: $Q = P \\cdot t = 100 \\times 60 = 6000$ J<br>
+                           2. Rearrange $Q = mc\\Delta T \\Rightarrow \\Delta T = \\frac{Q}{mc} = \\frac{6000}{200 \\times 4.184} = 7.2$°C.`
                 };
             },
             // Level 6
@@ -510,7 +542,6 @@
                 window.incorrectAttempts = 0;
                 resetUI(problem.unitHint);
             } else {
-                // Refresh numbers, but retain hints/examples on screen for guidance
                 document.getElementById('in1').value = "";
                 document.getElementById('in1').placeholder = "answer (" + problem.unitHint + ")";
                 const formulaBar = document.getElementById('formulaBar');
@@ -561,7 +592,6 @@
                     fb.innerText = "❌ Incorrect twice. Generating new numbers! Review the step-by-step example below.";
                     fb.className = "feedback incorrect";
                     
-                    // Regenerate new parameters for the current level while preserving step-by-step guidance
                     setTimeout(() => {
                         generate(true);
                     }, 1800);
