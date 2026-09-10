@@ -33,14 +33,18 @@
         input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 140px; }
         button { padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
         
-        /* Side Panel Canvas Setup */
         .side-panel { background: white; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-        .canvas-container { position: relative; width: 100%; height: 320px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
-        canvas { width: 100%; height: 100%; cursor: pointer; }
-        .meter-readout { background: #212529; color: #00ffc3; font-family: monospace; font-size: 1.2em; padding: 6px 12px; border-radius: 4px; margin-top: 8px; width: 90%; text-align: center; border: 2px solid #495057; }
+        .canvas-container { position: relative; width: 100%; height: 310px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; }
+        canvas { width: 100%; height: 100%; cursor: crosshair; }
+        
+        .mode-switch { display: flex; gap: 5px; margin: 8px 0; width: 100%; }
+        .mode-btn { flex: 1; padding: 6px; font-size: 0.8em; background: #e9ecef; color: #495057; border: 1px solid #ced4da; margin: 0; border-radius: 4px; }
+        .mode-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .meter-readout { background: #212529; color: #00ffc3; font-family: 'Courier New', monospace; font-size: 1.1em; padding: 8px 12px; border-radius: 6px; width: 100%; box-sizing: border-box; text-align: center; border: 2px solid #495057; font-weight: bold; }
 
         .ref-title { font-weight: bold; color: #1a3a5a; margin: 10px 0 5px 0; align-self: flex-start; }
-        .ref-eq { background: #f1f4f8; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; width: 100%; box-sizing: border-box; text-align: center; font-size: 0.9em; }
+        .ref-eq { background: #f1f4f8; border-radius: 6px; padding: 6px 10px; margin-bottom: 6px; width: 100%; box-sizing: border-box; text-align: center; font-size: 0.85em; }
         iframe { width: 100%; height: 100%; border: none; filter: invert(0.9) hue-rotate(180deg); }
     </style>
 </head>
@@ -75,14 +79,20 @@
         </div>
 
         <div class="side-panel">
-            <div style="font-weight: bold; color: #1a3a5a; margin-bottom: 5px;">Interactive Multimeter Workbench</div>
-            <div style="font-size: 0.75em; color: #6c757d; margin-bottom: 8px;">Drag 🔴 and 🖤 probes to circuit test points to measure voltage.</div>
+            <div style="font-weight: bold; color: #1a3a5a; margin-bottom: 2px;">Interactive Multimeter Workbench</div>
+            <div style="font-size: 0.72em; color: #6c757d; margin-bottom: 6px;">Snap 🔴 and 🖤 probes to circuit test points.</div>
             
+            <div class="mode-switch">
+                <button class="mode-btn active" id="btnV" onclick="setMeterMode('V')">Voltage (V)</button>
+                <button class="mode-btn" id="btnA" onclick="setMeterMode('A')">Current (A)</button>
+                <button class="mode-btn" id="btnR" onclick="setMeterMode('R')">Resistance (Ω)</button>
+            </div>
+
             <div class="canvas-container">
                 <canvas id="circuitCanvas"></canvas>
             </div>
             
-            <div class="meter-readout" id="meterDisplay">MULTIMETER: 0.00 V</div>
+            <div class="meter-readout" id="meterDisplay" style="margin-top:8px;">MULTIMETER: 0.00 V</div>
 
             <div style="width:100%;">
                 <div class="ref-title">Reference Equations</div>
@@ -102,12 +112,12 @@
         window.p = {};
         window.score = parseInt(localStorage.getItem('score_circuits')) || 0;
         window.incorrectAttempts = 0;
+        let meterMode = 'V';
 
         function rand(min, max) { return Math.random() * (max - min) + min; }
         function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
         function round(n, d) { const f = Math.pow(10, d); return Math.round(n * f) / f; }
 
-        // --- Interactive Canvas Multimeter Setup ---
         const canvas = document.getElementById('circuitCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -118,49 +128,149 @@
         window.addEventListener('resize', resizeCanvas);
 
         let nodes = [];
-        let redProbe = { x: 50, y: 280, radius: 10, dragging: false, label: "RED", connectedNode: null };
-        let blackProbe = { x: 90, y: 280, radius: 10, dragging: false, label: "BLK", connectedNode: null };
+        let components = [];
+        let redProbe = { x: 30, y: 275, radius: 10, dragging: false, label: "RED", connectedNode: null };
+        let blackProbe = { x: 75, y: 275, radius: 10, dragging: false, label: "BLK", connectedNode: null };
 
-        function initNodes(problem) {
-            // Define test nodes on canvas depending on problem level
-            const w = canvas.width || 300;
+        function setMeterMode(mode) {
+            meterMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn' + mode).classList.add('active');
+            drawCircuit();
+        }
+
+        function initCircuit(problem) {
+            const w = canvas.width || 320;
             if (problem.category === "ohms") {
                 nodes = [
-                    { id: "A", x: 60, y: 100, v: problem.Vs, name: "Vs (+)" },
-                    { id: "B", x: 60, y: 220, v: 0, name: "GND (-)" },
-                    { id: "C", x: 220, y: 100, v: problem.Vs, name: "Node R-Top" },
-                    { id: "D", x: 220, y: 220, v: 0, name: "Node R-Bot" }
+                    { id: "A", x: 50, y: 80, v: problem.Vs, name: "Node A (+)" },
+                    { id: "B", x: 50, y: 220, v: 0, name: "Node B (-)" },
+                    { id: "C", x: 230, y: 80, v: problem.Vs, name: "Node C" },
+                    { id: "D", x: 230, y: 220, v: 0, name: "Node D" }
+                ];
+                components = [
+                    { type: "source", x1: 50, y1: 80, x2: 50, y2: 220, label: `Vs=${problem.Vs}V` },
+                    { type: "resistor", x1: 230, y1: 80, x2: 230, y2: 220, label: `R=${problem.R}Ω`, val: problem.R }
                 ];
             } else if (problem.category === "series") {
                 nodes = [
-                    { id: "A", x: 50, y: 100, v: problem.Vs, name: "Vs (+)" },
-                    { id: "B", x: 50, y: 220, v: 0, name: "GND (-)" },
-                    { id: "C", x: 140, y: 100, v: problem.Vs - problem.VR1, name: "Mid Node (Between R1/R2)" },
-                    { id: "D", x: 240, y: 220, v: 0, name: "Node R2-Bot" }
+                    { id: "A", x: 40, y: 80, v: problem.Vs, name: "Vs (+)" },
+                    { id: "B", x: 40, y: 220, v: 0, name: "GND (-)" },
+                    { id: "C", x: 150, y: 80, v: problem.Vs - problem.VR1, name: "Mid-Node" },
+                    { id: "D", x: 260, y: 80, v: 0, name: "Node R2-Right" },
+                    { id: "E", x: 260, y: 220, v: 0, name: "Node Bot-Right" }
+                ];
+                components = [
+                    { type: "source", x1: 40, y1: 80, x2: 40, y2: 220, label: `Vs=${problem.Vs}V` },
+                    { type: "resistor", x1: 40, y1: 80, x2: 150, y2: 80, label: `R1=${problem.R1}Ω`, val: problem.R1 },
+                    { type: "resistor", x1: 150, y1: 80, x2: 260, y2: 80, label: `R2=${problem.R2}Ω`, val: problem.R2 }
                 ];
             } else {
                 nodes = [
-                    { id: "A", x: 60, y: 100, v: problem.Vs, name: "Vs (+)" },
-                    { id: "B", x: 60, y: 220, v: 0, name: "GND (-)" },
-                    { id: "C", x: 180, y: 100, v: problem.Vs, name: "Top Rail" },
-                    { id: "D", x: 180, y: 220, v: 0, name: "Bottom Rail" }
+                    { id: "A", x: 50, y: 80, v: problem.Vs, name: "Vs (+)" },
+                    { id: "B", x: 50, y: 220, v: 0, name: "GND (-)" },
+                    { id: "C", x: 160, y: 80, v: problem.Vs, name: "Top Rail" },
+                    { id: "D", x: 160, y: 220, v: 0, name: "Bot Rail" },
+                    { id: "E", x: 260, y: 80, v: problem.Vs, name: "Branch 2 Top" },
+                    { id: "F", x: 260, y: 220, v: 0, name: "Branch 2 Bot" }
+                ];
+                components = [
+                    { type: "source", x1: 50, y1: 80, x2: 50, y2: 220, label: `Vs=${problem.Vs}V` },
+                    { type: "resistor", x1: 160, y1: 80, x2: 160, y2: 220, label: `R1=${problem.R1}Ω`, val: problem.R1 },
+                    { type: "resistor", x1: 260, y1: 80, x2: 260, y2: 220, label: `R2=${problem.R2}Ω`, val: problem.R2 }
                 ];
             }
-            redProbe.x = 40; redProbe.y = 280; redProbe.connectedNode = null;
-            blackProbe.x = 90; blackProbe.y = 280; blackProbe.connectedNode = null;
+            redProbe.x = 30; redProbe.y = 275; redProbe.connectedNode = null;
+            blackProbe.x = 75; blackProbe.y = 275; blackProbe.connectedNode = null;
+        }
+
+        function drawResistorSymbol(x1, y1, x2, y2, label) {
+            const mx = (x1 + x2) / 2;
+            const my = (y1 + y2) / 2;
+            ctx.save();
+            ctx.strokeStyle = "#1a3a5a";
+            ctx.lineWidth = 3;
+
+            if (x1 === x2) { // Vertical
+                ctx.beginPath();
+                ctx.moveTo(x1, y1); ctx.lineTo(x1, my - 20);
+                ctx.lineTo(x1 - 8, my - 15); ctx.lineTo(x1 + 8, my - 5);
+                ctx.lineTo(x1 - 8, my + 5); ctx.lineTo(x1 + 8, my + 15);
+                ctx.lineTo(x1, my + 20); ctx.lineTo(x2, y2);
+                ctx.stroke();
+                ctx.fillStyle = "#d9480f";
+                ctx.font = "bold 11px sans-serif";
+                ctx.fillText(label, x1 + 12, my + 4);
+            } else { // Horizontal
+                ctx.beginPath();
+                ctx.moveTo(x1, y1); ctx.lineTo(mx - 20, y1);
+                ctx.lineTo(mx - 15, y1 - 8); ctx.lineTo(mx - 5, y1 + 8);
+                ctx.lineTo(mx + 5, y1 - 8); ctx.lineTo(mx + 15, y1 + 8);
+                ctx.lineTo(mx + 20, y1); ctx.lineTo(x2, y2);
+                ctx.stroke();
+                ctx.fillStyle = "#d9480f";
+                ctx.font = "bold 11px sans-serif";
+                ctx.fillText(label, mx - 15, y1 - 12);
+            }
+            ctx.restore();
+        }
+
+        function drawSourceSymbol(x1, y1, x2, y2, label) {
+            const my = (y1 + y2) / 2;
+            ctx.save();
+            ctx.strokeStyle = "#1a3a5a"; ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1); ctx.lineTo(x1, my - 12);
+            ctx.moveTo(x1, my + 12); ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            // Long (+), Short (-) battery lines
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(x1 - 15, my - 12); ctx.lineTo(x1 + 15, my - 12);
+            ctx.stroke();
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x1 - 8, my + 12); ctx.lineTo(x1 + 8, my + 12);
+            ctx.stroke();
+
+            ctx.fillStyle = "#d9480f";
+            ctx.font = "bold 11px sans-serif";
+            ctx.fillText(label, x1 - 50, my + 4);
+            ctx.restore();
         }
 
         function drawCircuit() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Wire Loop
+            // Draw outer wire loop defaults
             ctx.strokeStyle = "#1a3a5a";
             ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.rect(50, 60, canvas.width - 100, 160);
-            ctx.stroke();
 
-            // Draw Nodes
+            if (window.p.category === "ohms") {
+                ctx.beginPath();
+                ctx.moveTo(50, 80); ctx.lineTo(230, 80);
+                ctx.moveTo(50, 220); ctx.lineTo(230, 220);
+                ctx.stroke();
+            } else if (window.p.category === "series") {
+                ctx.beginPath();
+                ctx.moveTo(260, 80); ctx.lineTo(260, 220);
+                ctx.lineTo(40, 220);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(50, 80); ctx.lineTo(260, 80);
+                ctx.moveTo(50, 220); ctx.lineTo(260, 220);
+                ctx.stroke();
+            }
+
+            // Draw Components
+            components.forEach(c => {
+                if (c.type === "source") drawSourceSymbol(c.x1, c.y1, c.x2, c.y2, c.label);
+                if (c.type === "resistor") drawResistorSymbol(c.x1, c.y1, c.x2, c.y2, c.label);
+            });
+
+            // Draw Test Nodes
             nodes.forEach(n => {
                 ctx.fillStyle = "#d9480f";
                 ctx.beginPath();
@@ -168,10 +278,10 @@
                 ctx.fill();
                 ctx.fillStyle = "#212529";
                 ctx.font = "10px sans-serif";
-                ctx.fillText(n.name, n.x - 15, n.y - 10);
+                ctx.fillText(n.name, n.x - 12, n.y - 10);
             });
 
-            // Draw Leads to Probes
+            // Draw Leads
             drawLead(redProbe, "#d90429");
             drawLead(blackProbe, "#212529");
 
@@ -197,7 +307,7 @@
             ctx.arc(probe.x, probe.y, probe.radius, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = "#fff";
-            ctx.font = "bold 9px sans-serif";
+            ctx.font = "bold 8px sans-serif";
             ctx.textAlign = "center";
             ctx.fillText(probe.label, probe.x, probe.y + 3);
             ctx.textAlign = "start";
@@ -238,11 +348,26 @@
 
         function updateMultimeterDisplay() {
             const display = document.getElementById('meterDisplay');
-            if (redProbe.connectedNode && blackProbe.connectedNode) {
-                const diff = Math.abs(redProbe.connectedNode.v - blackProbe.connectedNode.v);
+            if (!redProbe.connectedNode || !blackProbe.connectedNode) {
+                display.innerText = `MULTIMETER: Open Circuit (Connect 🔴 & 🖤)`;
+                return;
+            }
+
+            const n1 = redProbe.connectedNode;
+            const n2 = blackProbe.connectedNode;
+
+            if (meterMode === 'V') {
+                const diff = Math.abs(n1.v - n2.v);
                 display.innerText = `MULTIMETER: ${diff.toFixed(2)} V`;
-            } else {
-                display.innerText = `MULTIMETER: 0.00 V (Connect both probes)`;
+            } else if (meterMode === 'A') {
+                const I = window.p.currentVal || (window.p.Vs / (window.p.R || (window.p.R1 + window.p.R2)));
+                if ((n1.id === "A" && n2.id === "C") || (n1.id === "C" && n2.id === "A")) {
+                    display.innerText = `MULTIMETER: ${I.toFixed(3)} A`;
+                } else {
+                    display.innerText = `MULTIMETER: 0.000 A (Must probe branch)`;
+                }
+            } else if (meterMode === 'R') {
+                display.innerText = `MULTIMETER: OL (Disconnect power for Ω)`;
             }
         }
 
@@ -253,9 +378,9 @@
                 const R = randInt(10, 50);
                 const target = round(Vs / R, 3);
                 return {
-                    category: "ohms", Vs: Vs,
-                    prompt: `A simple DC circuit has $R = ${R}\\ \\Omega$ and source $V_s = ${Vs}\\text{ V}$. Use the multimeter to measure potential across the nodes, then calculate the circuit current ($I$).`,
-                    stepLabel: "Level 1: Basic Ohm's Law",
+                    category: "ohms", Vs: Vs, R: R,
+                    prompt: `A circuit has a $R = ${R}\\ \\Omega$ resistor connected to $V_s = ${Vs}\\text{ V}$. Use the interactive meter to inspect values, then solve for total current ($I$).`,
+                    stepLabel: "Level 1: Basic Ohm's Law (Find Current)",
                     formula: "$$ I = \\frac{V}{R} $$",
                     valBoxes: [
                         { label: "Voltage (Vs)", value: Vs + " V" },
@@ -264,18 +389,18 @@
                         { label: "--", value: "--" }
                     ],
                     target: target, unitHint: "A",
-                    hint: "💡 <b>Hint:</b> Divide voltage by resistance: $I = \\frac{V}{R}$.",
+                    hint: "💡 <b>Hint:</b> Divide voltage by resistance ($I = \\frac{V}{R}$).",
                     example: "<h4>Step-by-Step Example:</h4>$I = \\frac{12}{24} = 0.5\\text{ A}$."
                 };
             },
             function () {
                 const Vs = randInt(10, 30);
                 const I = round(rand(0.2, 1.5), 2);
-                const target = round(Vs / I, 2);
+                const R = round(Vs / I, 2);
                 return {
-                    category: "ohms", Vs: Vs,
-                    prompt: `A circuit with $V_s = ${Vs}\\text{ V}$ draws $I = ${I}\\text{ A}$. Calculate the total resistance ($R$).`,
-                    stepLabel: "Level 2: Finding Resistance",
+                    category: "ohms", Vs: Vs, R: R, currentVal: I,
+                    prompt: `A circuit powered by $V_s = ${Vs}\\text{ V}$ draws $I = ${I}\\text{ A}$. Calculate total load resistance ($R$).`,
+                    stepLabel: "Level 2: Basic Ohm's Law (Find Resistance)",
                     formula: "$$ R = \\frac{V}{I} $$",
                     valBoxes: [
                         { label: "Voltage (Vs)", value: Vs + " V" },
@@ -283,7 +408,7 @@
                         { label: "Find", value: "Resistance (R)" },
                         { label: "--", value: "--" }
                     ],
-                    target: target, unitHint: "\u03A9",
+                    target: R, unitHint: "\u03A9",
                     hint: "💡 <b>Hint:</b> Use $R = \\frac{V}{I}$.",
                     example: "<h4>Step-by-Step Example:</h4>$R = \\frac{20}{0.8} = 25\\ \\Omega$."
                 };
@@ -296,8 +421,8 @@
                 const VR1 = I * R1;
                 const VR2 = round(I * R2, 2);
                 return {
-                    category: "series", Vs: Vs, VR1: VR1,
-                    prompt: `Two series resistors $R_1 = ${R1}\\ \\Omega$ and $R_2 = ${R2}\\ \\Omega$ are connected across $V_s = ${Vs}\\text{ V}$. Drag the multimeter probes to measure node voltages and calculate $V_{R2}$.`,
+                    category: "series", Vs: Vs, R1: R1, R2: R2, VR1: VR1, currentVal: I,
+                    prompt: `Resistors $R_1 = ${R1}\\ \\Omega$ and $R_2 = ${R2}\\ \\Omega$ are in series across $V_s = ${Vs}\\text{ V}$. Snap multimeter probes to measure node voltages and calculate $V_{R2}$.`,
                     stepLabel: "Level 3: Series Voltage Drop",
                     formula: "$$ V_{R2} = I \\cdot R_2 $$",
                     valBoxes: [
@@ -307,7 +432,7 @@
                         { label: "Find", value: "V_R2 (V)" }
                     ],
                     target: VR2, unitHint: "V",
-                    hint: "💡 <b>Hint:</b> Find total current first ($I = \\frac{V}{R_1 + R_2}$), then calculate $V_{R2} = I \\cdot R_2$.",
+                    hint: "💡 <b>Hint:</b> $R_{\\text{eq}} = R_1 + R_2$, then $I = \\frac{V_s}{R_{\\text{eq}}}$, then $V_{R2} = I \\cdot R_2$.",
                     example: "<h4>Step-by-Step Example:</h4>$R_{\\text{eq}} = 10 + 20 = 30\\ \\Omega \\implies I = 0.6\\text{ A} \\implies V_{R2} = 12\\text{ V}$."
                 };
             }
@@ -319,7 +444,7 @@
         }
 
         function generate(keepHints = false) {
-            if (window.score >= 3) { alert("Mastery Achieved! Level 3 Completed."); window.location.href = "index.html"; return; }
+            if (window.score >= 3) { alert("Mastery Achieved!"); window.location.href = "index.html"; return; }
 
             const problem = TYPE_BUILDERS[window.score % TYPE_BUILDERS.length]();
             window.p = problem;
@@ -335,7 +460,7 @@
             }
 
             resizeCanvas();
-            initNodes(problem);
+            initCircuit(problem);
             drawCircuit();
 
             if (!keepHints) {
