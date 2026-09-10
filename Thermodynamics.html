@@ -488,10 +488,9 @@
             }
         }
 
-        function generate() {
+        function generate(keepHints = false) {
             if (window.score >= 7) { alert("Mastery Achieved! You have completed all levels."); window.location.href = "index.html"; return; }
 
-            window.incorrectAttempts = 0;
             const problem = TYPE_BUILDERS[window.score % TYPE_BUILDERS.length]();
             window.p = problem;
 
@@ -507,11 +506,29 @@
 
             showScene(problem);
 
+            if (!keepHints) {
+                window.incorrectAttempts = 0;
+                resetUI(problem.unitHint);
+            } else {
+                // Refresh numbers, but retain hints/examples on screen for guidance
+                document.getElementById('in1').value = "";
+                document.getElementById('in1').placeholder = "answer (" + problem.unitHint + ")";
+                const formulaBar = document.getElementById('formulaBar');
+                formulaBar.innerHTML = "<b>Target Formula:</b> " + problem.formula;
+                formulaBar.style.display = "block";
+
+                const hintBox = document.getElementById('hintBox');
+                hintBox.innerHTML = problem.hint;
+                hintBox.style.display = "block";
+
+                const exampleBox = document.getElementById('exampleBox');
+                exampleBox.innerHTML = problem.example;
+                exampleBox.style.display = "block";
+            }
+
             if (window.MathJax && window.MathJax.typesetPromise) {
                 window.MathJax.typesetPromise();
             }
-
-            resetUI(problem.unitHint);
         }
 
         window.check1 = function () {
@@ -529,21 +546,25 @@
                 formulaBar.style.display = "none";
                 window.score++;
                 localStorage.setItem('score_thermo', window.score);
-                setTimeout(generate, 1500);
+                setTimeout(() => generate(false), 1500);
             } else {
                 window.incorrectAttempts++;
-                fb.innerText = "❌ Incorrect. Try again!";
-                fb.className = "feedback incorrect";
 
-                if (window.incorrectAttempts >= 1) {
+                if (window.incorrectAttempts === 1) {
+                    fb.innerText = "❌ Incorrect. Try again!";
+                    fb.className = "feedback incorrect";
                     formulaBar.innerHTML = "<b>Target Formula:</b> " + window.p.formula;
                     formulaBar.style.display = "block";
                     hintBox.innerHTML = window.p.hint;
                     hintBox.style.display = "block";
-                }
-                if (window.incorrectAttempts >= 2) {
-                    exampleBox.innerHTML = window.p.example;
-                    exampleBox.style.display = "block";
+                } else if (window.incorrectAttempts >= 2) {
+                    fb.innerText = "❌ Incorrect twice. Generating new numbers! Review the step-by-step example below.";
+                    fb.className = "feedback incorrect";
+                    
+                    // Regenerate new parameters for the current level while preserving step-by-step guidance
+                    setTimeout(() => {
+                        generate(true);
+                    }, 1800);
                 }
 
                 if (window.MathJax && window.MathJax.typesetPromise) {
@@ -575,7 +596,7 @@
             document.getElementById('scoreDisplay').innerText = `Mastery: ${window.score}/7`;
         }
 
-        window.onload = generate;
+        window.onload = () => generate(false);
     </script>
 </body>
 </html>
