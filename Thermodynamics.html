@@ -13,8 +13,32 @@
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background-color: var(--bg); color: #212529; overflow: hidden; }
         .wrapper { display: grid; grid-template-columns: 1.2fr 1fr 480px; height: 100vh; gap: 15px; padding: 15px; box-sizing: border-box; }
         .work-area { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-y: auto; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); margin-bottom: 15px; padding-bottom: 10px; }
-        .btn-back { background: #6c757d; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+        .header-flex { border-bottom: 2px solid var(--primary); margin-bottom: 15px; padding-bottom: 10px; }
+        
+        /* Level Buttons Bar Styling */
+        .level-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+        .lvl-btn { 
+            padding: 6px 12px; 
+            border: 2px solid transparent; 
+            background: #e9ecef; 
+            color: var(--primary); 
+            border-radius: 6px; 
+            font-size: 0.85em; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: all 0.2s ease-in-out;
+            margin-left: 0;
+        }
+        .lvl-btn:hover { opacity: 0.85; }
+        
+        /* Attempt-Based Green Color Shades */
+        .lvl-btn.tier-1 { background-color: #2b8a3e; color: white; } /* Correct on 1st try (Bright Green) */
+        .lvl-btn.tier-2 { background-color: #5c940d; color: white; } /* Correct on 2nd try (Medium Green) */
+        .lvl-btn.tier-3 { background-color: #82c91e; color: #1a3a5a; } /* Correct on 3rd+ try (Soft Lime) */
+        
+        /* Active Selected Question Styling */
+        .lvl-btn.active { border-color: var(--primary) !important; box-shadow: 0 0 0 2px var(--primary); }
+
         .val-card { background: #f1f4f8; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
         .val-box { border-left: 3px solid var(--primary); padding-left: 8px; }
         .val-label { font-size: 0.65em; text-transform: uppercase; color: #6c757d; font-weight: bold; }
@@ -27,7 +51,7 @@
         .incorrect { background: #f8d7da; color: #721c24; display: block !important; }
         
         .hint-box { background: #e7f5ff; border: 1px solid #a5d8ff; color: #1864ab; padding: 10px 12px; border-radius: 6px; font-size: 0.85em; margin-top: 10px; display: none; }
-        .example-box { background: #f3f0ff; border: 1px solid #d0bfff; color: #3b5bdb; padding: 12px; border-radius: 6px; font-size: 0.85em; margin-top: 10px; display: none; line-height: 1.4; }
+        .example-box { background: #f3f0ff; border: 1px solid #d0bfff; color: #2b3a80; padding: 12px; border-radius: 6px; font-size: 0.85em; margin-top: 10px; display: none; line-height: 1.5; }
         .example-box h4 { margin: 0 0 6px 0; color: #4c6ef5; font-size: 0.95em; }
 
         input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 140px; }
@@ -48,9 +72,20 @@
     <div class="wrapper">
         <div class="work-area">
             <div class="header-flex">
-                <a href="index.html" class="btn-back">← Back</a>
-                <h1 id="scenarioTitle" style="font-size: 1.2em; margin: 0;">Level 1</h1>
-                <div id="scoreDisplay" style="background:var(--accent); color:white; padding:4px 12px; border-radius:20px; font-size:0.8em; font-weight:bold;">Mastery: 0/7</div>
+                <div class="level-bar" id="levelBtnContainer">
+                    <button class="lvl-btn" onclick="jumpToLevel(0)">Q1</button>
+                    <button class="lvl-btn" onclick="jumpToLevel(1)">Q2</button>
+                    <button class="lvl-btn" onclick="jumpToLevel(2)">Q3</button>
+                    <button class="lvl-btn" onclick="jumpToLevel(3)">Q4</button>
+                    <button class="lvl-btn" onclick="jumpToLevel(4)">Q5</button>
+                    <button class="lvl-btn" onclick="jumpToLevel(5)">Q6</button>
+                    <button class="lvl-btn" onclick="jumpToLevel(6)">Q7 (R-Val)</button>
+                    <button class="lvl-btn" onclick="jumpToLevel(7)">Q8 (R-Val)</button>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h1 id="scenarioTitle" style="font-size: 1.1em; margin: 0;">Level 1</h1>
+                    <div id="scoreDisplay" style="background:var(--accent); color:white; padding:4px 12px; border-radius:20px; font-size:0.8em; font-weight:bold;">Mastery: 0/8</div>
+                </div>
             </div>
 
             <div class="prompt-text" id="promptText">Loading problem...</div>
@@ -163,6 +198,7 @@
             <div style="width:100%; margin-top:10px;">
                 <div class="ref-title">Reference Equations</div>
                 <div class="ref-eq">$$Q = mc\Delta T$$</div>
+                <div class="ref-eq">$$Q_{\text{gained}} = Q_{\text{lost}}$$</div>
                 <div class="ref-eq">$$P = \frac{kA\Delta T}{L}$$</div>
                 <div class="ref-eq">$$P = \frac{Q}{\Delta t}$$</div>
                 <div class="ref-eq">$$R_{\text{total}} = \sum R_{\text{direct}} + \sum (R_{\text{per in}} \times \text{Thickness})$$</div>
@@ -176,6 +212,9 @@
         window.p = {};
         window.score = parseInt(localStorage.getItem('score_thermo')) || 0;
         window.incorrectAttempts = 0;
+        
+        // Track question performance states: null = unattempted, 1 = 1st try, 2 = 1 wrong, 3 = 2+ wrong
+        window.levelHistory = JSON.parse(localStorage.getItem('level_history_thermo')) || {};
 
         const HEAT_MATERIALS = [
             { name: "water", c: 4.184 },
@@ -249,7 +288,7 @@
         }
 
         const TYPE_BUILDERS = [
-            // Level 1
+            // Level 1: Basic Heat Transfer
             function () {
                 const mat = pick(HEAT_MATERIALS);
                 const useKg = Math.random() < 0.5;
@@ -258,6 +297,12 @@
                 const unitStr = useKg ? "kg" : "g";
                 const dT = randInt(5, 35);
                 const target = round(m_g * mat.c * dT, 1);
+
+                // Alternate sample values for guided reference
+                const ex_m_g = 500;
+                const ex_c = 0.900;
+                const ex_dT = 15;
+                const ex_Q = round(ex_m_g * ex_c * ex_dT, 1);
 
                 return {
                     category: "heat",
@@ -275,16 +320,14 @@
                     hint: useKg 
                         ? "💡 <b>Hint:</b> Convert mass from kg to grams first ($1 \\text{ kg} = 1000 \\text{ g}$) to align with $c$ in J/g°C, then use $Q = mc\\Delta T$."
                         : "💡 <b>Hint:</b> Look at the reference equations. Choose the formula relating heat energy ($Q$), mass ($m$), specific heat ($c$), and temperature change ($\\Delta T$).",
-                    example: useKg 
-                        ? `<h4>Step-by-Step Example:</h4>
-                           For a 0.5 kg material ($0.5 \\times 1000 = 500$ g) with $c = 0.5$ J/g°C and $\\Delta T = 10$°C:<br>
-                           $Q = 500 \\times 0.5 \\times 10 = 2500$ J.`
-                        : `<h4>Step-by-Step Example:</h4>
-                           For a 200 g material with $c = 0.5$ J/g°C and $\\Delta T = 10$°C:<br>
-                           $Q = 200 \\times 0.5 \\times 10 = 1000$ J.`
+                    example: `<h4>Guided Worked Example (Reference Procedure):</h4>
+                    <b>Problem Example:</b> Find $Q$ for a $0.5\\text{ kg}$ aluminum sample ($c = ${ex_c}\\text{ J/g}\u00B0\\text{C}$) heated by $15\u00B0\\text{C}$.<br>
+                    <b>Step 1:</b> Convert mass to grams: $0.5\\text{ kg} \\times 1000 = ${ex_m_g}\\text{ g}$.<br>
+                    <b>Step 2:</b> Apply formula $Q = m \\cdot c \\cdot \\Delta T$.<br>
+                    <b>Step 3:</b> Calculate: $Q = ${ex_m_g} \\times ${ex_c} \\times ${ex_dT} = \\mathbf{${ex_Q}\\text{ J}}$.`
                 };
             },
-            // Level 2
+            // Level 2: Conduction Rate
             function () {
                 const mat = pick(CONDUCT_MATERIALS);
                 const A = round(rand(1.0, 3.0), 2);
@@ -292,6 +335,14 @@
                 const L_cm = round(rand(2, 10), 1);
                 const L_m = L_cm / 100;
                 const target = round((mat.k * A * dT) / L_m, 2);
+
+                const ex_k = 0.8;
+                const ex_A = 2.0;
+                const ex_dT = 20;
+                const ex_L_cm = 5.0;
+                const ex_L_m = 0.05;
+                const ex_P = round((ex_k * ex_A * ex_dT) / ex_L_m, 2);
+
                 return {
                     category: "conduct",
                     prompt: `A sheet of ${mat.name} (k = ${mat.k} W/m°C) has a surface area of ${A} m² and a thickness of ${L_cm} cm. The temperature difference across it is ${dT}°C. Calculate the rate of heat flow in Watts (J/s).`,
@@ -306,13 +357,14 @@
                     target: target,
                     unitHint: "W",
                     hint: "💡 <b>Hint:</b> Check your units carefully. Ensure thickness $L$ is converted to meters to match the thermal conductivity ($k$) unit in $P = \\frac{kA\\Delta T}{L}$.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $k = 0.5$, $A = 2$, $\\Delta T = 20$, and $L = 5$ cm:<br>
-                    1. Convert $L$: $5 \\text{ cm} = 0.05 \\text{ m}$<br>
-                    2. Calculate $P$: $(0.5 \\times 2 \\times 20) / 0.05 = 400$ W.`
+                    example: `<h4>Guided Worked Example (Reference Procedure):</h4>
+                    <b>Problem Example:</b> $k = ${ex_k}\\text{ W/m}\u00B0\\text{C}$, $A = ${ex_A}\\text{ m}^2$, $\\Delta T = ${ex_dT}\u00B0\\text{C}$, and thickness $L = ${ex_L_cm}\\text{ cm}$.<br>
+                    <b>Step 1:</b> Convert $L$ from cm to meters: $L = ${ex_L_cm}\\text{ cm} / 100 = ${ex_L_m}\\text{ m}$.<br>
+                    <b>Step 2:</b> Apply formula $P = \\frac{k \\cdot A \\cdot \\Delta T}{L}$.<br>
+                    <b>Step 3:</b> Calculate: $P = \\frac{${ex_k} \\times ${ex_A} \\times ${ex_dT}}{${ex_L_m}} = \\mathbf{${ex_P}\\text{ W}}$.`
                 };
             },
-            // Level 3
+            // Level 3: Specific Heat - Final Temperature
             function () {
                 const mat = pick(HEAT_MATERIALS);
                 const useKg = Math.random() < 0.5;
@@ -323,6 +375,13 @@
                 const dT = randInt(10, 35);
                 const Q = round(m_g * mat.c * dT, 0);
                 const target = round(T_initial + dT, 1);
+
+                const ex_m_g = 400;
+                const ex_c = 0.450;
+                const ex_Q = 3600;
+                const ex_T_init = 20;
+                const ex_dT = round(ex_Q / (ex_m_g * ex_c), 1);
+                const ex_T_final = ex_T_init + ex_dT;
 
                 return {
                     category: "heat",
@@ -340,23 +399,25 @@
                     hint: useKg 
                         ? "💡 <b>Hint:</b> Convert mass from kg to grams first ($1 \\text{ kg} = 1000 \\text{ g}$) to match $c$ (J/g°C), solve for $\\Delta T = \\frac{Q}{mc}$, then add to $T_{\\text{initial}}$."
                         : "💡 <b>Hint:</b> Use $Q = mc\\Delta T$ to solve for temperature change $\\Delta T$ first, then combine it with $T_{\\text{initial}}$.",
-                    example: useKg
-                        ? `<h4>Step-by-Step Example:</h4>
-                           If $m = 0.2$ kg ($200$ g), $c = 0.5$ J/g°C, $Q = 1000$ J, $T_{\\text{initial}} = 20$°C:<br>
-                           1. $\\Delta T = \\frac{Q}{mc} = \\frac{1000}{200 \\times 0.5} = 10$°C<br>
-                           2. $T_{\\text{final}} = T_{\\text{initial}} + \\Delta T = 20 + 10 = 30$°C.`
-                        : `<h4>Step-by-Step Example:</h4>
-                           If $m = 100$ g, $c = 0.5$ J/g°C, $Q = 500$ J, and $T_{\\text{initial}} = 20$°C:<br>
-                           1. Rearrange: $\\Delta T = \\frac{Q}{mc} = \\frac{500}{100 \\times 0.5} = 10$°C<br>
-                           2. Calculate $T_{\\text{final}}$: $T_{\\text{final}} = T_{\\text{initial}} + \\Delta T = 20 + 10 = 30$°C.`
+                    example: `<h4>Guided Worked Example (Reference Procedure):</h4>
+                    <b>Problem Example:</b> $0.4\\text{ kg}$ iron ($c=${ex_c}\\text{ J/g}\u00B0\\text{C}$) starts at $20\u00B0\\text{C}$ and receives $3600\\text{ J}$.<br>
+                    <b>Step 1:</b> Convert mass to grams: $0.4\\text{ kg} = ${ex_m_g}\\text{ g}$.<br>
+                    <b>Step 2:</b> Rearrange $Q=mc\\Delta T$ to solve for $\\Delta T$: $\\Delta T = \\frac{Q}{m \\cdot c} = \\frac{${ex_Q}}{${ex_m_g} \\times ${ex_c}} = ${ex_dT}\u00B0\\text{C}$.<br>
+                    <b>Step 3:</b> Calculate $T_{\\text{final}} = T_{\\text{initial}} + \\Delta T = ${ex_T_init} + ${ex_dT} = \\mathbf{${ex_T_final}\u00B0\\text{C}}$.`
                 };
             },
-            // Level 4
+            // Level 4: Power and Energy
             function () {
                 const P = randInt(30, 150);
                 const hours = round(rand(1.0, 3.0), 1);
                 const seconds = hours * 3600;
                 const target = round(P * seconds, 0);
+
+                const ex_P = 100;
+                const ex_hrs = 2;
+                const ex_sec = ex_hrs * 3600;
+                const ex_Q = ex_P * ex_sec;
+
                 return {
                     category: "power",
                     prompt: `A heating device rated at ${P} Watts operates continuously for ${hours} hours. Calculate the total thermal energy transferred in Joules.`,
@@ -371,14 +432,61 @@
                     target: target,
                     unitHint: "J",
                     hint: "💡 <b>Hint:</b> Use $P = \\frac{Q}{\\Delta t}$. Convert time from hours to seconds first ($1 \\text{ hour} = 3600 \\text{ seconds}$).",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If $P = 50$ W and time is $2$ hours:<br>
-                    1. Rearrange: $Q = P \\cdot \\Delta t$<br>
-                    2. Convert time: $2 \\text{ hours} \\times 3600 = 7200$ s<br>
-                    3. Calculate $Q$: $50 \\times 7200 = 360,000$ J.`
+                    example: `<h4>Guided Worked Example (Reference Procedure):</h4>
+                    <b>Problem Example:</b> $P = ${ex_P}\\text{ W}$ operating for $t = ${ex_hrs}\\text{ hours}$.<br>
+                    <b>Step 1:</b> Convert time to seconds: $t = ${ex_hrs} \\times 3600\\text{ s/hr} = ${ex_sec}\\text{ s}$.<br>
+                    <b>Step 2:</b> Rearrange power formula: $Q = P \\times \\Delta t$.<br>
+                    <b>Step 3:</b> Calculate: $Q = ${ex_P} \\times ${ex_sec} = \\mathbf{${ex_Q}\\text{ J}}$.`
                 };
             },
-            // Level 5
+            // Level 5: Thermal Equilibrium
+            function () {
+                const c_w = 4.184;
+                const c_al = 0.900;
+                
+                const m_w_kg = round(rand(0.2, 0.8), 2);
+                const m_w_g = m_w_kg * 1000;
+                
+                const useKgAl = Math.random() < 0.5;
+                const m_al_g = randInt(100, 500);
+                const m_al_display = useKgAl ? round(m_al_g / 1000, 2) : m_al_g;
+                const alUnitStr = useKgAl ? "kg" : "g";
+                
+                const T_w_i = randInt(15, 25);
+                const T_al_i = randInt(80, 150);
+                
+                const T_final_exact = (m_al_g * c_al * T_al_i + m_w_g * c_w * T_w_i) / (m_al_g * c_al + m_w_g * c_w);
+                const target = round(T_final_exact, 1);
+
+                const ex_mw = 500;
+                const ex_mal = 200;
+                const ex_Tw = 20;
+                const ex_Tal = 100;
+                const ex_Tf = round((ex_mal * c_al * ex_Tal + ex_mw * c_w * ex_Tw) / (ex_mal * c_al + ex_mw * c_w), 1);
+
+                return {
+                    category: "heat",
+                    prompt: `A hot aluminum block ($c_{\\text{Al}} = ${c_al}\\text{ J/g}\u00B0\\text{C}$) with mass $m_{\\text{Al}} = ${m_al_display}\\text{ }${alUnitStr}$ at ${T_al_i}°C is placed in an insulated container with ${m_w_kg} kg of water ($c_{\\text{water}} = ${c_w}\\text{ J/g}\u00B0\\text{C}$) at ${T_w_i}°C. Calculate the <b>final equilibrium temperature ($T_{\\text{final}}$)</b> of both materials in °C.`,
+                    stepLabel: "Level 5: Thermal Equilibrium (Q_gained = Q_lost)",
+                    formula: "$$ Q_{\\text{gained}} = Q_{\\text{lost}} \\implies m_w c_w (T_f - T_{w,i}) = m_{\\text{Al}} c_{\\text{Al}} (T_{\\text{Al},i} - T_f) $$",
+                    valBoxes: [
+                        { label: "Water", value: `${m_w_kg} kg @ ${T_w_i}\u00B0C` },
+                        { label: "Aluminum", value: `${m_al_display} ${alUnitStr} @ ${T_al_i}\u00B0C` },
+                        { label: "c (Water / Al)", value: `${c_w} / ${c_al} J/g\u00B0C` },
+                        { label: "Find", value: "T_final (\u00B0C)" }
+                    ],
+                    target: target,
+                    unitHint: "\u00B0C",
+                    hint: "💡 <b>Hint:</b> Convert all masses to grams ($1\\text{ kg} = 1000\\text{ g}$) so they match $c$ in J/g°C. Set $m_w c_w (T_f - T_{w,i}) = m_{\\text{Al}} c_{\\text{Al}} (T_{\\text{Al},i} - T_f)$ and solve for $T_f$.",
+                    example: `<h4>Guided Worked Example (Reference Procedure):</h4>
+                    <b>Problem Example:</b> $200\\text{ g}$ aluminum at $100\u00B0\\text{C}$ dropped into $0.5\\text{ kg}$ ($500\\text{ g}$) water at $20\u00B0\\text{C}$.<br>
+                    <b>Step 1:</b> Set up equilibrium balance: $m_{\\text{water}} c_{\\text{water}} (T_f - 20) = m_{\\text{Al}} c_{\\text{Al}} (100 - T_f)$.<br>
+                    <b>Step 2:</b> Substitute values: $500(4.184)(T_f - 20) = 200(0.900)(100 - T_f)$.<br>
+                    <b>Step 3:</b> Simplify: $2092(T_f - 20) = 180(100 - T_f) \\implies 2092 T_f - 41840 = 18000 - 180 T_f$.<br>
+                    <b>Step 4:</b> Solve for $T_f$: $2272 T_f = 59840 \\implies T_f = \\mathbf{${ex_Tf}\u00B0\\text{C}}$.`
+                };
+            },
+            // Level 6: Multistep Heat & Conduction
             function () {
                 const mat = pick(CONDUCT_MATERIALS);
                 const useKg = Math.random() < 0.5;
@@ -396,10 +504,20 @@
                 const unitStr = useKg ? "kg" : "g";
                 const actual_dT = round(Q / (water_mass_g * c_water), 1);
 
+                const ex_k = 0.8;
+                const ex_A = 1.0;
+                const ex_dT_wall = 20;
+                const ex_L = 0.04;
+                const ex_P = (ex_k * ex_A * ex_dT_wall) / ex_L; // 400 W
+                const ex_t = 120; // sec
+                const ex_Q = ex_P * ex_t; // 48000 J
+                const ex_m_w = 1000; // g
+                const ex_water_dT = round(ex_Q / (ex_m_w * c_water), 1);
+
                 return {
                     category: "conduct",
                     prompt: `Heat conducts through a ${mat.name} panel (k = ${mat.k} W/m°C) with area ${A} m² and thickness ${L} m (temp diff ${dT_wall}°C) into a container holding ${water_mass_display} ${unitStr} of water (c = 4.184 J/g°C) for ${time_sec} seconds. Calculate the <b>temperature rise (&Delta;T) of the water</b> in °C.`,
-                    stepLabel: "Level 5: Multistep Heat & Conduction",
+                    stepLabel: "Level 6: Multistep Heat & Conduction",
                     formula: "$$ P = \\frac{kA\\Delta T}{L} \\quad \\text{and} \\quad Q = mc\\Delta T $$",
                     valBoxes: [
                         { label: "Wall Area", value: A + " m\u00B2" },
@@ -409,22 +527,15 @@
                     ],
                     target: actual_dT,
                     unitHint: "\u00B0C",
-                    hint: useKg
-                        ? "💡 <b>Hint:</b> Compute heat $Q = P \\cdot \\Delta t$. Convert water mass from kg to grams ($1 \\text{ kg} = 1000 \\text{ g}$), then use $Q = mc\\Delta T$ to solve for $\\Delta T$."
-                        : "💡 <b>Hint:</b> Combine two reference formulas. Find conduction power $P$, calculate total heat transferred ($Q = P \\cdot \\Delta t$), and solve for $\\Delta T$ in $Q = mc\\Delta T$.",
-                    example: useKg
-                        ? `<h4>Step-by-Step Example:</h4>
-                           If $P = 100$ W, $t = 60$ s, water mass = $0.2$ kg ($200$ g), $c = 4.184$ J/g°C:<br>
-                           1. Heat energy transferred: $Q = 100 \\times 60 = 6000$ J<br>
-                           2. Convert mass: $0.2 \\text{ kg} = 200 \\text{ g}$<br>
-                           3. Solve $\\Delta T = \\frac{6000}{200 \\times 4.184} = 7.2$°C.`
-                        : `<h4>Step-by-Step Example:</h4>
-                           If $P = 100$ W, time $t = 60$ s, water mass $m = 200$ g, $c = 4.184$ J/g°C:<br>
-                           1. Heat energy transferred: $Q = P \\cdot t = 100 \\times 60 = 6000$ J<br>
-                           2. Rearrange $Q = mc\\Delta T \\Rightarrow \\Delta T = \\frac{Q}{mc} = \\frac{6000}{200 \\times 4.184} = 7.2$°C.`
+                    hint: "💡 <b>Hint:</b> Combine two reference formulas. Find conduction power $P$, calculate total heat transferred ($Q = P \\cdot \\Delta t$), and solve for $\\Delta T$ in $Q = mc\\Delta T$.",
+                    example: `<h4>Guided Worked Example (Reference Procedure):</h4>
+                    <b>Problem Example:</b> Glass panel ($k=0.8$, $A=1.0\\text{ m}^2$, $L=0.04\\text{ m}$, $\\Delta T_{\\text{wall}}=20\u00B0\\text{C}$) transfers heat to $1.0\\text{ kg}$ ($1000\\text{ g}$) water over $120\\text{ s}$.<br>
+                    <b>Step 1:</b> Calculate power rate: $P = \\frac{0.8 \\times 1.0 \\times 20}{0.04} = ${ex_P}\\text{ W}$.<br>
+                    <b>Step 2:</b> Calculate energy transferred: $Q = P \\times t = ${ex_P} \\times ${ex_t} = ${ex_Q}\\text{ J}$.<br>
+                    <b>Step 3:</b> Calculate water temperature rise: $\\Delta T = \\frac{Q}{m \\cdot c} = \\frac{${ex_Q}}{1000 \\times 4.184} = \\mathbf{${ex_water_dT}\u00B0\\text{C}}$.`
                 };
             },
-            // Level 6
+            // Level 7: 5-Layer R-Value
             function () {
                 const cavityThick = pick([3.5, 5.5]); 
                 const insMat = pick([MAT_LIBRARY.ins_fiberglass, MAT_LIBRARY.ins_rockwool, MAT_LIBRARY.ins_cellulose]);
@@ -445,7 +556,7 @@
                     category: "rtable",
                     layers: layers,
                     prompt: `Using the <b>R-Value Chart</b> on the right, calculate the combined total thermal resistance (<b>Total R-Value</b>) for a 5-layer exterior wall. Look up each individual material layer value and compute the total sum.`,
-                    stepLabel: "Level 6: 5-Layer Wall Assembly R-Value",
+                    stepLabel: "Level 7: 5-Layer Wall Assembly R-Value",
                     formula: "$$ R_{\\text{total}} = \\sum R_{\\text{direct}} + \\sum (R_{\\text{per in}} \\times \\text{Thickness}) $$",
                     valBoxes: [
                         { label: "Exterior", value: "Wood Bevel Siding" },
@@ -456,12 +567,13 @@
                     target: totalR,
                     unitHint: "R",
                     hint: "💡 <b>Hint:</b> Note that cavity insulation specifies R-value <i>per inch</i>. Multiply per-inch values by layer thickness in inches before adding.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    If siding = 0.8, sheathing = 0.63, insulation = 3.14/in × 3.5 in (10.99), drywall = 0.45, air = 0.68:<br>
-                    $R_{\\text{total}} = 0.8 + 0.63 + 10.99 + 0.45 + 0.68 = 13.55$.`
+                    example: `<h4>Guided Worked Example (Reference Procedure):</h4>
+                    <b>Problem Example Assembly:</b> Wood Siding ($0.80$), $1/2\\text{ in.}$ OSB ($0.63$), $3.5\\text{ in.}$ Fiberglass ($3.14\\text{/in}$), $1/2\\text{ in.}$ Drywall ($0.45$), Inside Air Film ($0.68$).<br>
+                    <b>Step 1:</b> Calculate per-inch layer: $R_{\\text{insulation}} = 3.5 \\times 3.14 = 10.99$.<br>
+                    <b>Step 2:</b> Sum all 5 layers: $R_{\\text{total}} = 0.80 + 0.63 + 10.99 + 0.45 + 0.68 = \\mathbf{13.55\\text{ R}}$.`
                 };
             },
-            // Level 7
+            // Level 8: 7-Layer R-Value
             function () {
                 const cavityThick = pick([3.5, 5.5, 7.25]); 
                 const insMat = pick([MAT_LIBRARY.ins_fiberglass, MAT_LIBRARY.ins_rockwool, MAT_LIBRARY.ins_cellulose]);
@@ -486,7 +598,7 @@
                     category: "rtable",
                     layers: layers,
                     prompt: `Using the <b>R-Value Chart</b>, calculate the total thermal resistance (<b>Total R-Value</b>) for a <b>high-efficiency 7-layer building envelope wall</b> shown in the visual cross-section diagram.`,
-                    stepLabel: "Level 7: 7-Layer Building Envelope R-Value",
+                    stepLabel: "Level 8: 7-Layer Building Envelope R-Value",
                     formula: "$$ R_{\\text{total}} = \\sum R_{\\text{direct}} + \\sum (R_{\\text{per in}} \\times \\text{Thickness}) $$",
                     valBoxes: [
                         { label: "Exterior", value: `${sidingMat.name} + Air Film` },
@@ -497,9 +609,10 @@
                     target: totalR,
                     unitHint: "R",
                     hint: "💡 <b>Hint:</b> Verify that you have included both exterior and interior air film layers alongside structural materials in your total sum.",
-                    example: `<h4>Step-by-Step Example:</h4>
-                    Summing each layer:<br>
-                    Air Out (0.17) + Siding (0.80) + Rigid (5.00) + Sheathing (1.32) + Cavity Ins (3.14×3.5=10.99) + Drywall (0.56) + Air In (0.68) = 19.52.`
+                    example: `<h4>Guided Worked Example (Reference Procedure):</h4>
+                    <b>Problem Example Assembly:</b> Outside Air ($0.17$), Brick ($0.80$), $1\\text{ in.}$ XPS Foam ($5.00$), $1/2\\text{ in.}$ Fiberboard ($1.32$), $3.5\\text{ in.}$ Rockwool ($3.40\\text{/in}$), $5/8\\text{ in.}$ Drywall ($0.56$), Inside Air ($0.68$).<br>
+                    <b>Step 1:</b> Calculate per-inch layer: $R_{\\text{insulation}} = 3.5 \\times 3.40 = 11.90$.<br>
+                    <b>Step 2:</b> Sum all 7 layers: $R_{\\text{total}} = 0.17 + 0.80 + 5.00 + 1.32 + 11.90 + 0.56 + 0.68 = \\mathbf{20.43\\text{ R}}$.`
                 };
             }
         ];
@@ -520,13 +633,45 @@
             }
         }
 
-        function generate(keepHints = false) {
-            if (window.score >= 7) { alert("Mastery Achieved! You have completed all levels."); window.location.href = "index.html"; return; }
+        function updateLevelButtons(activeIdx) {
+            const buttons = document.querySelectorAll('.lvl-btn');
+            buttons.forEach((btn, idx) => {
+                btn.className = 'lvl-btn';
 
-            const problem = TYPE_BUILDERS[window.score % TYPE_BUILDERS.length]();
+                if (idx === activeIdx) {
+                    btn.classList.add('active');
+                }
+
+                const statusTier = window.levelHistory[idx];
+                if (statusTier === 1) {
+                    btn.classList.add('tier-1');
+                } else if (statusTier === 2) {
+                    btn.classList.add('tier-2');
+                } else if (statusTier === 3) {
+                    btn.classList.add('tier-3');
+                }
+            });
+        }
+
+        function jumpToLevel(lvlIndex) {
+            window.score = parseInt(lvlIndex);
+            localStorage.setItem('score_thermo', window.score);
+            generate(false);
+        }
+
+        function generate(keepHints = false) {
+            if (window.score >= TYPE_BUILDERS.length) { 
+                alert("Mastery Achieved! You have completed all levels."); 
+                window.score = 0;
+                localStorage.setItem('score_thermo', 0);
+            }
+
+            const lvlIdx = window.score % TYPE_BUILDERS.length;
+            const problem = TYPE_BUILDERS[lvlIdx]();
             window.p = problem;
 
-            document.getElementById('scenarioTitle').innerText = "Level " + (window.score + 1);
+            updateLevelButtons(lvlIdx);
+            document.getElementById('scenarioTitle').innerText = "Level " + (lvlIdx + 1);
             document.getElementById('promptText').innerHTML = problem.prompt;
             document.getElementById('stepLabel').innerText = problem.stepLabel;
 
@@ -551,10 +696,6 @@
                 const hintBox = document.getElementById('hintBox');
                 hintBox.innerHTML = problem.hint;
                 hintBox.style.display = "block";
-
-                const exampleBox = document.getElementById('exampleBox');
-                exampleBox.innerHTML = problem.example;
-                exampleBox.style.display = "block";
             }
 
             if (window.MathJax && window.MathJax.typesetPromise) {
@@ -568,6 +709,7 @@
             const hintBox = document.getElementById('hintBox');
             const exampleBox = document.getElementById('exampleBox');
             const formulaBar = document.getElementById('formulaBar');
+            const currentLevel = window.score % TYPE_BUILDERS.length;
 
             if (isClose(input, window.p.target)) {
                 fb.innerText = "✅ Correct! Answer = " + window.p.target + " " + window.p.unitHint;
@@ -575,6 +717,18 @@
                 hintBox.style.display = "none";
                 exampleBox.style.display = "none";
                 formulaBar.style.display = "none";
+
+                if (window.incorrectAttempts === 0) {
+                    window.levelHistory[currentLevel] = 1;
+                } else if (window.incorrectAttempts === 1) {
+                    window.levelHistory[currentLevel] = 2;
+                } else {
+                    window.levelHistory[currentLevel] = 3;
+                }
+
+                localStorage.setItem('level_history_thermo', JSON.stringify(window.levelHistory));
+                updateLevelButtons(currentLevel);
+
                 window.score++;
                 localStorage.setItem('score_thermo', window.score);
                 setTimeout(() => generate(false), 1500);
@@ -582,19 +736,25 @@
                 window.incorrectAttempts++;
 
                 if (window.incorrectAttempts === 1) {
-                    fb.innerText = "❌ Incorrect. Try again!";
+                    fb.innerText = "❌ Incorrect (1st attempt). Review the hint!";
                     fb.className = "feedback incorrect";
                     formulaBar.innerHTML = "<b>Target Formula:</b> " + window.p.formula;
                     formulaBar.style.display = "block";
                     hintBox.innerHTML = window.p.hint;
                     hintBox.style.display = "block";
-                } else if (window.incorrectAttempts >= 2) {
-                    fb.innerText = "❌ Incorrect twice. Generating new numbers! Review the step-by-step example below.";
+                } else {
+                    fb.innerText = `❌ Incorrect (${window.incorrectAttempts} attempts). A step-by-step example with sample numbers is provided below for reference.`;
                     fb.className = "feedback incorrect";
                     
-                    setTimeout(() => {
-                        generate(true);
-                    }, 1800);
+                    formulaBar.innerHTML = "<b>Target Formula:</b> " + window.p.formula;
+                    formulaBar.style.display = "block";
+                    
+                    hintBox.innerHTML = window.p.hint;
+                    hintBox.style.display = "block";
+
+                    // Reveal guided step-by-step procedure after 2 or more incorrect attempts
+                    exampleBox.innerHTML = window.p.example;
+                    exampleBox.style.display = "block";
                 }
 
                 if (window.MathJax && window.MathJax.typesetPromise) {
@@ -623,7 +783,8 @@
             exampleBox.style.display = "none";
             exampleBox.innerHTML = "";
 
-            document.getElementById('scoreDisplay').innerText = `Mastery: ${window.score}/7`;
+            const masterCount = Object.keys(window.levelHistory).length;
+            document.getElementById('scoreDisplay').innerText = `Mastery: ${masterCount}/${TYPE_BUILDERS.length}`;
         }
 
         window.onload = () => generate(false);
